@@ -1,0 +1,10 @@
+{
+	"tilemap" : {
+		"filepath" : "./res/tilemap.png",
+		"frame-width" : 32
+	},
+	"entities64" : {
+		"filepath" : "./res/entities64.png",
+		"frame-width" : 64
+	}
+}

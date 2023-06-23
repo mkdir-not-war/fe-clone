@@ -1,0 +1,10 @@
+1) Defeat is just as interesting as Victory -- each one leads to unique new
+challenges and content.
+
+2) Multiple objectives - choose which to prioritize and which to sacrifice if any
+
+3) randomization of characters at the beginning for replayability
+	^ what features of a character are randomized? 
+	^ what features does a character have at all?
+
+4) instead of grid combat a la D&D, do action/tactic combat like Assemble the Heroes

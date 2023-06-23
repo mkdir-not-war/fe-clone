@@ -1,0 +1,12 @@
+* tiles are 32x32
+* collision is a tile map -- each tile is made of four 16x16 collision squares,
+	construct collision map from tile map on saving the tile map to map file.
+
+** instead of using a separate tile sheet for animated tiles,
+   just do them in rows of 4 (since the tilesheet is 8 wide,
+   can fit 2 animated tiles per row). Like the int array of 
+   tile indexes, have a bool array of animated or not (mostly not).
+   If yes, sample from the next tile in the row on next frame.
+ ^^ animated tiles are at the top of the tilesheet png,
+    hard code how many rows are animated, don't display them
+    in the tilepicker for static tiles

@@ -1,0 +1,46 @@
+{
+	"styles" : "onetime | repeat | boomerang",
+
+
+	"player" : {
+		"idle-side" : {
+			"row" : 0,
+			"frames" : 3,
+			"style" : "boomerang",
+			"speed" : 12
+		},
+		"walk-side" : {
+			"row" : 3,
+			"frames" : 6,
+			"style" : "repeat",
+			"speed" : 12
+		}
+	},
+
+	"todo" : {
+		"idle-up" : {
+			"row" : 1,
+			"frames" : 3,
+			"style" : "boomerang",
+			"speed" : 16
+		},
+		"idle-down" : {
+			"row" : 2,
+			"frames" : 3,
+			"style" : "boomerang",
+			"speed" : 16
+		},
+		"walk-up" : {
+			"row" : 4,
+			"frames" : 6,
+			"style" : "repeat",
+			"speed" : 16
+		},
+		"walk-down" : {
+			"row" : 5,
+			"frames" : 6,
+			"style" : "repeat",
+			"speed" : 16
+		}
+	}
+}
