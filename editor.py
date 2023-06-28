@@ -8,14 +8,15 @@ import json
 from src.getmath import *
 
 # constants
-WIN_WIDTH = 1050
+WIN_WIDTH = 1200
 WIN_HEIGHT = 600
 
 # no zoom, adds too much complexity
 
 TILE_WIDTH = 32
 
-GAMEMAP_WIDTH = 600
+# window constants
+GAMEMAP_WIDTH = 700
 COLLISIONSET_ZOOM = 2.0
 
 TILEPICKER_PXBUFFER = 5
@@ -34,10 +35,19 @@ SUBSCREEN_RECTS = {
 	)
 }
 
+# drawing constants
 NUM_SPRITE_LAYERS = 4
 FPS = 60
 FRAMES_PER_ANIMATION = 16
 TILES_PER_ANIMATION = 4
+
+# game map tile dimensions
+MAP_GRID_WIDTH 		= 13 # only used in combat, not really in editor?
+MAP_GRID_HEIGHT 	= 13 # only used in combat, not really in editor?
+MAP_HORZBORDER		= 3
+MAP_VERTBORDER		= 2
+MAP_WIDTH			= MAP_GRID_WIDTH + MAP_HORZBORDER*2
+MAP_HEIGHT 			= MAP_GRID_HEIGHT + MAP_VERTBORDER*2
 
 # input codes
 class InputCodes(IntEnum):
@@ -59,38 +69,38 @@ white = pygame.Color('white')
 pygame.font.init()
 font_arial = pygame.font.Font("./data/fonts/ARI.ttf", 16)
 
+class TileLayer(IntEnum):
+	BG 		= 0
+	MG1 	= 1
+	MG2 	= 2
+	FG 		= 3
 
 class MapData:
 	def __init__(self):
 		self.filename = ''
-		self.width = 10 #-1
-		self.height = 10 #-1
-		self.spriteindex = []
-		self.collisionindex = []
+		self.tile_layers = [[]] * 4
+
+		# full WIDTH * HEIGHT arrays of indices
+		self.tile_layers[TileLayer.BG] = []
+		self.tile_layers[TileLayer.MG1] = []
+
+		# arrays of tuples (x, y, index)
+		self.tile_layers[TileLayer.MG2] = []
+		self.tile_layers[TileLayer.FG] = []
 
 	def get_spriteindex(self, layer, x, y):
 		result = -1
-		if (x >= self.width or x < 0 or
-			y >= self.height or y < 0):
+		if (x >= MAP_WIDTH or x < 0 or
+			y >= MAP_HEIGHT or y < 0):
 			result = -1
 		else:
-			result = self.spriteindex[(layer * self.width * self.height) + x + self.width * y]
+			result = self.spriteindex[(layer * MAP_WIDTH * MAP_HEIGHT) + x + MAP_WIDTH * y]
 		return result
 
-	def draw(self, spritebatch, xmin, xmax, ymin, ymax):
-		blitlists = [[] * NUM_SPRITE_LAYERS]
-		for layer in range(NUM_SPRITE_LAYERS):
-			for y in range(ymin, ymax+1):
-				for x in range(xmin, xmax+1):
-					si = self.get_spriteindex(layer, x, y)
-					if si >= 0:
-						blitlists[layer].append(spritebatch.draw_tile())
-		return blitlists
+	def load(self, mapname):
+		self.filename = './data/maps/%s.dat' % mapname
 
-	def load(self, filename):
-		self.filename = filename
-
-		fin = open(filename, 'r')
+		fin = open(self.filename, 'r')
 
 		loadphase = 0
 
@@ -99,11 +109,7 @@ class MapData:
 			if loadphase == 0:
 				pass
 
-
-		self.width = dim[0]
-		self.height = dim[1]
-
-		self.spriteindex = [-1] * (NUM_SPRITE_LAYERS * self.width * self.height)
+		self.spriteindex = [-1] * (NUM_SPRITE_LAYERS * MAP_HEIGHT * MAP_WIDTH)
 		self.collisionindex = [0] * len(self.spriteindex) * 4 # each tile has 4 quadrants of collision
 
 		fin.close()
@@ -123,7 +129,7 @@ class SpriteBatch:
 		self.scenespritedata = json.load(fin)
 		fin.close()
 
-		self.tilemap_sprite = pygame.image.load(self.scenespritedata['tilemap']['filepath'])
+		self.tilemap_sprite = pygame.image.load(self.scenespritedata['tilemap']['filepath']).convert_alpha()
 		self.tilemap_dim = (
 			self.tilemap_sprite.get_rect().width // TILE_WIDTH, 
 			self.tilemap_sprite.get_rect().height // TILE_WIDTH
@@ -180,30 +186,44 @@ class SpriteBatch:
 
 		return result
 
-	def draw_tile(self, tilemapindex, rect, fliphorz=False):
-		
-		# scale image to the rect (already zoomed)
-		scale = (int(TILE_WIDTH * TILE_ZOOM), int(TILE_WIDTH * TILE_ZOOM))
-		image = pygame.transform.scale(self.tilemap_sprite, scale)
+	def draw_tilelayer(self, mapdata, tilelayer):
 
-		tile_y = tilemapindex // self.tilemap_dim[1]
-		tile_x = tilemapindex - (tile_y * self.tilemap_dim[0])
-		tilearea = Rect(
-			(tile_x * TILE_WIDTH, tile_y * TILE_WIDTH),
-			(TILE_WIDTH, TILE_WIDTH)
-			)
+		min_x_tile, max_x_tile, min_y_tile, max_y_tile = (0, MAP_WIDTH, 0, MAP_HEIGHT)
 
-		result = None
+		# scale image to the rect
+		scale_factor = 1 # * camera.zoom
+		scaled_width = ZOOMED_WIDTH
+		image = self.tilemap_texture
 
-		'''
-		if (fliphorz):
-			image = pygame.transform.flip(image, True, False)
-			result = (image, rect.get_pyrect())
-		else:
-			result = (image, rect.get_pyrect())
-		'''
+		result = []
 
-		result = (image, (rect.left, rect.top), tilearea)
+		# TODO: if index is in animated range, 
+		#       draw animated using animationstep in editorstate
+
+		for y in range(min_y_tile, max_y_tile):
+			for x in range(min_x_tile, max_x_tile):
+				tilemapindex = regionmap.tile_layers[tilelayer][y * regionmap.width + x]
+				#print(tilemapindex)
+				tile_y = tilemapindex // self.tilemap_dim[0]
+				tile_x = tilemapindex - (tile_y * self.tilemap_dim[0])
+
+				# skip if tile is the blank tile
+				if tile_x == 0 and tile_y == TILEMAP_NUM_ANIMATED_ROWS:
+					continue
+
+				tilearea = Rect(
+					(tile_x * scaled_width, tile_y * scaled_width),
+					(scaled_width, scaled_width)
+				)
+
+				map_pos = (x * TILE_WIDTH, y * TILE_WIDTH)
+				screen_pos = SpriteBatch.get_screenpos_from_mappos(map_pos, camerapos)
+
+				result.append(
+					(image, 
+					Rect(screen_pos, (scaled_width, scaled_width)).get_pyrect(), 
+					tilearea.get_pyrect())
+				)
 
 		return result
 
@@ -309,6 +329,10 @@ class EditorState:
 			self.animation_step = 0
 
 def main(argv):
+	if (len(sys.argv) != 2):
+		print('wrong number of command line args. Received %d, expected %d' % (len(sys.argv), 2))
+		quit()
+
 	pygame.init()
 	Tk().withdraw()
 
@@ -333,6 +357,10 @@ def main(argv):
 
 	# editor state
 	editorstate = EditorState()
+
+	# setup gamemap
+	editorstate.gamemap = MapData()
+	editorstate.gamemap.load(sys.argv[1])
 
 	while not done:
 		clock.tick(FPS)
@@ -458,6 +486,7 @@ def main(argv):
 
 		# TODO: draw map here
 		if (editorstate.gamemap != None):
+			'''
 			maprange = (0, 9, 0, 9)
 			for i in range(maprange[0], maprange[1]+1):
 				for j in range(maprange[2], maprange[3]+1):
@@ -469,59 +498,33 @@ def main(argv):
 						subscreen_gamemap, white, bgtilerect.get_pyrect(), 1
 					)
 
-			blitlists = gamemap.draw(spritebatch, 0, 10, 0, 10)
+			blitlists = editorstate.gamemap.draw(spritebatch, 0, 10, 0, 10)
 			for blitlist in blitlists:
 				subscreen_gamemap.blits(blitlist)
+			'''
 
-		# draw background grid #######
-		maprange = (1, 10, 1, 10)
-		for i in range(maprange[0], maprange[1]+1):
-			for j in range(maprange[2], maprange[3]+1):
-				bgtilerect = Rect(
-					(i * TILE_WIDTH, j * TILE_WIDTH),
-					(TILE_WIDTH, TILE_WIDTH)
-				)
-				pygame.draw.rect(
-					subscreen_gamemap, neutralgrey, bgtilerect.get_pyrect(), 1
-				)
+			# draw background grid #######
+			maprange = (1, MAP_WIDTH, 1, MAP_HEIGHT)
+			for i in range(maprange[0], maprange[1]+1):
+				for j in range(maprange[2], maprange[3]+1):
+					bgtilerect = Rect(
+						(i * TILE_WIDTH, j * TILE_WIDTH),
+						(TILE_WIDTH, TILE_WIDTH)
+					)
+					pygame.draw.rect(
+						subscreen_gamemap, neutralgrey, bgtilerect.get_pyrect(), 1
+					)
 
-		wholemaprect = Rect(
-			(maprange[0] * TILE_WIDTH, maprange[2] * TILE_WIDTH), 
-			((maprange[1]-maprange[0]+1) * TILE_WIDTH, (maprange[3]-maprange[2]+1) * TILE_WIDTH)
-		)
-		pygame.draw.rect(
-			subscreen_gamemap, neutralgrey, wholemaprect.get_pyrect(), 2
-		)
-		## end draw background grid
+			wholemaprect = Rect(
+				(maprange[0] * TILE_WIDTH, maprange[2] * TILE_WIDTH), 
+				((maprange[1]-maprange[0]+1) * TILE_WIDTH, (maprange[3]-maprange[2]+1) * TILE_WIDTH)
+			)
+			pygame.draw.rect(
+				subscreen_gamemap, neutralgrey, wholemaprect.get_pyrect(), 2
+			)
+			## end draw background grid
 
 		pygame.draw.rect(subscreen_gamemap, darkred, subscreen_gamemap.get_rect(), 2)
-		
-		'''
-		# get camera maptile range
-		camerabounds = camera.get_maptilebounds(mapdata)
-		camera_minx = max(camerabounds.x-1, 0)
-		camera_miny = max(camerabounds.y-1, 0)
-		camera_maxx = min(camerabounds.x + camerabounds.width, mapdata.width)
-		camera_maxy = min(camerabounds.y + camerabounds.height, mapdata.height)
-
-		# draw sprites in order of layers
-		for layer in range(NUM_SPRITE_LAYERS):
-			blitlist = []
-			for j in range(camera_miny, camera_maxy):
-				for i in range(camera_minx, camera_maxx):
-					si = mapdata.get_spriteindex(layer, i, j)
-					if (si >= 0):
-						rect = Rect(
-							mapdata.get_tile2pos(i, j, offset=False), 
-							(TILE_WIDTH, TILE_WIDTH)
-						)
-						rect = camera.get_screenrect(rect)
-						image2blit = mapdata.get(layer, x, y)
-						blitlist.append(image2blit)
-			# ((Surface src, <x,y> dest, pygame.Rect<left,top,w,h> area), ...)
-			screen.blits(blitlist) 
-		'''
-
 		## End Draw Map Surface
 
 

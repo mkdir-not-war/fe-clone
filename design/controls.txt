@@ -1,0 +1,18 @@
+==== IN COMBAT ============================
+* RT/LT - swap screens/characters
+== on your turn ==
+* LS - move
+* X - prepare special attack
+* Y - prepare ultimate attack
+* B - prepare basic attack
+* A - confirm attack, end your turn
+== on enemy turn, during attack cinematic ==
+* X - dodge (crush attacks)
+* Y - jump (sweep attacks)
+* B - counter (stab attacks)
+
+==== OUT OF COMBAT ============================
+* LS - move
+* A - confirm
+* B - cancel
+* start - pause menu
