@@ -1,0 +1,21 @@
+<< no title screen, just load into main menu >>
+1) MAIN MENU
+	* CONTINUE [if any game saved]
+		-> load game immediately, spawn character on map
+	* NEW GAME
+		-> new game menu
+	* STATISTICS [if game finished at least once, any difficulty]
+		-> stats page
+	<< no way to delete stats in-game, must delete game data from system >>
+
+2) NEW GAME MENU
+	1) [if any game saved] Warning! This will overwrite current saved game.
+	2) CHOOSE DIFFICULTY:
+		* DISASTER (Easy)
+		* CATACLYSM (Normal)
+		* APOCALYPSE [must finish Cataclysm first]
+			-> choose difficulty settings like Hades Pact of Punishment
+				^^ one option maybe randomizes the city layout
+	3) very short cutscene, maybe as simple as the player character walking up 
+		into position on the first map, dialogue begins and auto-plays on side.
+	4) playing the game!

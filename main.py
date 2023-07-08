@@ -22,8 +22,8 @@ from src.constants import *
 import src.myanim as myanim
 
 # window constants
-WIN_WIDTH = 1050
-WIN_HEIGHT = 600
+WIN_WIDTH = 1200
+WIN_HEIGHT = 675
 
 # map info and draw constants
 TILE_ZOOM = 2
@@ -71,11 +71,29 @@ colfin = open('./data/maps/collisiontilemap.dat', 'r')
 tilemap_coldata = [int(i) for i in colfin.read().split(' ')]
 colfin.close()
 
+######## ENUMS #################
+
+class TileLayer(IntEnum):
+	BG 		= 0
+	MG1 	= 1
+	MG2 	= 2
+	FG 		= 3
+
+class GameInputMode(IntEnum):
+	MENUMODE		= 0
+	FREEMODE		= 1
+	COMBATPLAYER	= 2
+	COMBATENEMY		= 3
+	COMBATCUTSCENE	= 4
+
+######## END ENUMS #############
+
 class DrawCache:
 	def __init__(self):
 		self.bgtilecache = []
 
 # one spritebatch for animated sprites, one for not (i.e. geometry)
+# NOTE: ^^ is this true? Are we doing this?
 class SpriteBatch:
 	def __init__(self):
 		self.length = 0
@@ -216,12 +234,6 @@ class SpriteBatch:
 		result = (image, Rect(drawpos, (zoomed_width, zoomed_width)).get_pyrect(), tilearea.get_pyrect())
 		
 		return result
-
-class TileLayer(IntEnum):
-	BG 		= 0
-	MG1 	= 1
-	MG2 	= 2
-	FG 		= 3
 
 class RegionMap:
 	def __init__(self):
