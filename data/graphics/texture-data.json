@@ -1,6 +1,6 @@
 {
 	"tilemap" : {
-		"filepath" : "./res/tilemap.png",
+		"filepath" : "./res/tilemaps/tm-template.png",
 		"frame-width" : 32
 	},
 	"entities64" : {

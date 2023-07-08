@@ -21,25 +21,21 @@ from src.collision import *
 from src.constants import *
 import src.myanim as myanim
 
-# window constants
-WIN_WIDTH = 1200
-WIN_HEIGHT = 675
+# window constants (16:9)
+TILE_ZOOM = 1 # eventually go 2 here
+WIN_WIDTH = 960 * TILE_ZOOM
+WIN_HEIGHT = 540 * TILE_ZOOM
 
 # map info and draw constants
-TILE_ZOOM = 2
 ZOOMED_WIDTH = TILE_WIDTH * TILE_ZOOM
 TILEMAP_WIDTH_IN_TILES = 8
-TILEMAP_NUM_ANIMATED_ROWS = 2
 TILEMAP_FRAMES_PER_ANIMATION = 16
-TILEMAP_TILES_PER_ANIMATION = 4
-TILEMAP_BLANK_TILE_INDEX = TILEMAP_NUM_ANIMATED_ROWS * TILEMAP_WIDTH_IN_TILES
 
-# camera constants
-CAMERA_TILES_WIDE = 16 # even number
-CAMERA_TILES_HIGH = 10 # even number
-CAMERA_PXOFFSET_FROM_PLAYER = (0, -12)
-
-GAMEMAP_WIDTH = 600
+# gamemap constants
+GAMEMAP_TILES_WIDE = 19
+GAMEMAP_TILES_HIGH = 15
+GAMEMAP_SCREEN_Y = (WIN_HEIGHT - GAMEMAP_TILES_HIGH * TILE_WIDTH * TILE_ZOOM) // 2
+GAMEMAP_SCREEN_X = WIN_WIDTH - GAMEMAP_TILES_WIDE * TILE_WIDTH * TILE_ZOOM - GAMEMAP_SCREEN_Y
 
 # physics constants
 PLAYER_MAXSPEED = 10.0 * TILE_WIDTH
@@ -50,8 +46,8 @@ PLAYER_FRICTION = 0.1 * PLAYER_MAXSPEED
 PLAYER_ACCEL = 0.03 * PLAYER_MAXSPEED_SQ
 
 # misc constants
+FRAMERATE_LOCK = 144
 PHYSICS_TIME_STEP = 1.0/100
-NUM_REGIONS_IN_WORLD = 1
 
 # colors
 neutralgrey = pygame.Color(150, 150, 160)
@@ -66,7 +62,7 @@ white = pygame.Color('white')
 pygame.font.init()
 font_arial16 = pygame.font.Font('./data/fonts/ARI.ttf', 16)
 
-# collision data for tilemap
+# collision data for tilemaps (same for all tilemaps, as long as they follow the template)
 colfin = open('./data/maps/collisiontilemap.dat', 'r')
 tilemap_coldata = [int(i) for i in colfin.read().split(' ')]
 colfin.close()
@@ -75,16 +71,14 @@ colfin.close()
 
 class TileLayer(IntEnum):
 	BG 		= 0
-	MG1 	= 1
-	MG2 	= 2
-	FG 		= 3
+	MG 		= 1
+	FG 		= 2
 
 class GameInputMode(IntEnum):
 	MENUMODE		= 0
 	FREEMODE		= 1
 	COMBATPLAYER	= 2
 	COMBATENEMY		= 3
-	COMBATCUTSCENE	= 4
 
 ######## END ENUMS #############
 
@@ -104,7 +98,7 @@ class SpriteBatch:
 		data = json.load(fin)
 		fin.close()
 
-		# load tilemap
+		# load tilemap (TODO: eventually load all tilemaps)
 		self.tilemap_texture = pygame.image.load(data['tilemap']['filepath']).convert_alpha()
 		self.tilemap_dim = (
 			self.tilemap_texture.get_rect().width // TILE_WIDTH, 
@@ -123,9 +117,9 @@ class SpriteBatch:
 		self.entity64_texture_flipped = pygame.transform.flip(self.entity64_texture, True, False)
 		self.entity64_texture_pxwidth = self.entity64_texture.get_rect().width
 
-	def get_screenpos_from_mappos(map_pos, camera_pos):
-		screen_pos = v2_mult(v2_sub(map_pos, camera_pos), TILE_ZOOM)
-		screen_pos = v2_add(screen_pos, (WIN_WIDTH / 2, WIN_HEIGHT / 2))
+	def get_screenpos_from_mappos(map_pos):
+		screen_pos = v2_mult(map_pos, TILE_ZOOM)
+		screen_pos = v2_add((GAMEMAP_SCREEN_X, GAMEMAP_SCREEN_Y), screen_pos)
 		return screen_pos
 
 	def draw_tile(self, tilemapindex, pos):
@@ -148,12 +142,10 @@ class SpriteBatch:
 		result = (image, Rect((pos[0], pos[1]), (zoomed_tile_width, zoomed_tile_width)).get_pyrect(), tilearea.get_pyrect())
 		return result
 
-	def draw_tilelayer(self, regionmap, tilelayer, camerabounds, camerapos):
-
-		min_x_tile, max_x_tile, min_y_tile, max_y_tile = camerabounds
+	def draw_tilelayer(self, regionmap, tilelayer):
 
 		# scale image to the rect
-		scale_factor = 1 # * camera.zoom
+		scale_factor = 1
 		scaled_width = ZOOMED_WIDTH
 		image = self.tilemap_texture
 		'''
@@ -164,18 +156,15 @@ class SpriteBatch:
 
 		result = []
 
-		# TODO: if index is in animated range, 
-		#       draw animated using animationstep in editorstate
-
-		for y in range(min_y_tile, max_y_tile):
-			for x in range(min_x_tile, max_x_tile):
+		for y in range(regionmap.height):
+			for x in range(regionmap.width):
 				tilemapindex = regionmap.tile_layers[tilelayer][y * regionmap.width + x]
 				#print(tilemapindex)
 				tile_y = tilemapindex // self.tilemap_dim[0]
 				tile_x = tilemapindex - (tile_y * self.tilemap_dim[0])
 
 				# skip if tile is the blank tile
-				if tile_x == 0 and tile_y == TILEMAP_NUM_ANIMATED_ROWS:
+				if tile_x == 0:
 					continue
 
 				tilearea = Rect(
@@ -184,7 +173,7 @@ class SpriteBatch:
 				)
 
 				map_pos = (x * TILE_WIDTH, y * TILE_WIDTH)
-				screen_pos = SpriteBatch.get_screenpos_from_mappos(map_pos, camerapos)
+				screen_pos = SpriteBatch.get_screenpos_from_mappos(map_pos)
 
 				result.append(
 					(image, 
@@ -194,14 +183,13 @@ class SpriteBatch:
 
 		return result
 
-	def draw_entity(self, entity, camerapos):
+	def draw_entity(self, entity):
 
-		scale_factor = TILE_ZOOM # * camera.zoom
+		scale_factor = TILE_ZOOM
 		image = None
 
 		width = entity.frame_size
 		if (width == 64):
-			# zoom here if we decide the camera can do that
 			if entity.flipanimhorz:
 				image = self.entity64_texture_flipped
 			else:
@@ -209,7 +197,6 @@ class SpriteBatch:
 		else:
 			pass
 
-		# TODO: zoom here if we decide the camera can do that
 		zoomed_width = scale_factor * width
 
 		tile_x, tile_y = entity.curr_animation.sample()
@@ -228,7 +215,7 @@ class SpriteBatch:
 
 		map_pos = entity.get_pos()
 		bottom_of_collision_box = v2_add(map_pos, (0, entity.coll_height))
-		screen_pos = SpriteBatch.get_screenpos_from_mappos(bottom_of_collision_box, camerapos)
+		screen_pos = SpriteBatch.get_screenpos_from_mappos(bottom_of_collision_box)
 		drawpos = v2_add(screen_pos, (-zoomed_width/2, -zoomed_width))
 
 		result = (image, Rect(drawpos, (zoomed_width, zoomed_width)).get_pyrect(), tilearea.get_pyrect())
@@ -238,63 +225,40 @@ class SpriteBatch:
 class RegionMap:
 	def __init__(self):
 
-		# TODO: load map data from a map file eventually, and entity positions and shit too
+		# whole map is always shown (no zooming or camera mvmt). Dimensions are constant, all maps same size.
+		self.width = GAMEMAP_TILES_WIDE
+		self.height = GAMEMAP_TILES_HIGH
 
-		self.width = 24
-		self.height = 13
-		
-		'''
-		self.bg_tilelayer = [
-			18, 19, 19, 18, 19, 18, 18, 19, 19, 18, 19, 18,
-			18, 18, 18, 18, 19, 18, 18, 19, 19, 18, 19, 18,
-			19, 19, 20, 20, 18, 19, 18, 19, 19, 18, 19, 18,
-			18, 19, 20, 20, 18, 18, 18, 19, 19, 18, 19, 18,
-			18, 18, 19, 18, 19, 18, 18, 19, 19, 18, 19, 18,
-			19, 19, 18, 18, 19, 18, 18, 19, 19, 18, 19, 18] * 4 # 100% full (width * height)
-		'''
+		self.tile_layers = [[]] * 3
 
-		# test combat map -- grass and fenced-in area
-		self.tile_layers = [[]] * 4
 
+		####### test combat map -- grass and fenced-in area ################
 		self.tile_layers[TileLayer.BG] = [
-			18, 19, 19, 18, 20, 18, 19, 20, 18, 19, 18, 19, 20, 20, 19, 18, 19, 19, 18, 18, 18, 18, 19, 35,
-			19, 19, 18, 18, 19, 18, 19, 18, 18, 19, 19, 18, 20, 18, 19, 18, 18, 19, 18, 19, 20, 20, 19, 34,
-			19, 19, 18, 19, 19, 18, 20, 18, 19, 18, 18, 19, 18, 19, 20, 20, 19, 18, 19, 20, 19, 19, 19, 18,
-			19, 20, 20, 18, 25, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 27, 20, 18, 19, 18, 18, 19, 18, 
-			20, 19, 19, 20, 33, 34, 68, 34, 34, 68, 68, 68, 34, 68, 34, 68, 35, 20, 18, 18, 18, 18, 19, 35,
-			18, 19, 20, 19, 33, 34, 68, 68, 68, 68, 68, 34, 68, 68, 68, 34, 35, 19, 19, 18, 20, 18, 19, 18, 
-			18, 19, 19, 18, 33, 68, 34, 68, 68, 34, 34, 68, 68, 34, 34, 34, 35, 19, 18, 18, 19, 19, 18, 36,
-			19, 19, 18, 18, 33, 68, 68, 34, 34, 68, 34, 34, 34, 68, 34, 68, 35, 19, 20, 20, 19, 18, 18, 19, 
-			19, 18, 19, 20, 33, 68, 34, 68, 68, 34, 68, 34, 68, 34, 68, 34, 35, 20, 18, 19, 18, 20, 19, 35,
-			20, 19, 18, 19, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 43, 19, 18, 19, 20, 20, 19, 34,
-			19, 20, 19, 20, 20, 19, 18, 18, 18, 19, 20, 19, 19, 19, 19, 18, 19, 19, 18, 20, 18, 19, 18, 18, 
-			18, 20, 18, 19, 19, 18, 19, 19, 18, 20, 18, 19, 18, 18, 19, 18, 19, 20, 20, 19, 18, 19, 19, 18,
-			19, 19, 18, 19, 19, 18, 20, 18, 19, 18, 18, 19, 18, 19, 20, 20, 19, 18, 19, 20, 19, 19, 19, 18
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2,
+			4, 2, 3, 4, 5, 10, 11, 12, 13, 2, 3, 4, 5, 2, 3, 5, 2, 3, 4,
+			3, 4, 2, 3, 4, 12, 13, 10, 11, 5, 2, 3, 4, 5, 2, 4, 3, 4, 2,
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2,
+			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3, 
+			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 5, 3, 4, 2, 5, 3,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2,
+			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3,
+			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 5, 4, 2, 3,
+			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2, 3, 4,
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 5, 3, 4, 2, 5,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2
 		]
 
-		bl = TILEMAP_BLANK_TILE_INDEX
-		self.tile_layers[TileLayer.MG1] = [
-			bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 93, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 94, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 89, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, 88, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, 101, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 102, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl,
-			bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl, bl
-		]
-
-		self.tile_layers[TileLayer.MG2] = [bl] * self.width * self.height # sparse -> (tileindex, x, y)
-		self.tile_layers[TileLayer.FG] = [bl] * self.width * self.height # sparse -> (tileindex, x, y)
+		self.tile_layers[TileLayer.MG] = [0] * self.width * self.height
+		self.tile_layers[TileLayer.FG] = [0] * self.width * self.height
+		######################################################################
 
 		self.collisionmap = self.load_collisionmap()
 
-		self.curr_spawn_tile = (6, 5)
+		# TODO: change this to one of four directions, and extrapolate both character positions from that
+		self.curr_spawn_tile = (7, 6) 
 
 	def get_spawnpos(self):
 		return (
@@ -331,18 +295,19 @@ class RegionMap:
 			collint = 0
 
 			collint |= tilemap_coldata[self.tile_layers[TileLayer.BG][i]]
-			collint |= tilemap_coldata[self.tile_layers[TileLayer.MG1][i]]
-			collint |= tilemap_coldata[self.tile_layers[TileLayer.MG2][i]]
+			collint |= tilemap_coldata[self.tile_layers[TileLayer.MG][i]]
 			# NOTE: foreground (fg) layer does not collide
 
 			result.append(collint)
 
 		return result
 
+# this is really just a map cache, nothing special going on here
+# maybe we rename when we do refactoring
 class WorldMap:
 	def __init__(self):
 		self.curr_region_index = 0
-		self.regionmaps = [RegionMap()] * NUM_REGIONS_IN_WORLD
+		self.regionmaps = [RegionMap()]
 
 	def regionmap(self):
 		return self.regionmaps[self.curr_region_index]
@@ -364,18 +329,11 @@ class Entity:
 		self.frame_size = 64
 		self.flipanimhorz = False
 		self.facing_direction = None
-		self.facing_stunned = False # when this is on, don't turn directions
 
 		# collision stuff
 		# width and height are half the length of the rectangle -- position is in the center of the rect
 		self.coll_width = 0 # since we only have width and height, 
 		self.coll_height = 0 # entity collision shapes are only rectangles?
-		# TODO: maybe later we condier circular collision as well? Not sure if needed
-		# 		remember, collision isn't the same as hit/hurt boxes.
-		self.wall2N = False
-		self.wall2S = False
-		self.wall2E = False
-		self.wall2W = False
 
 	def get_prevpos(self):
 		return (self.prev_x, self.prev_y)
@@ -440,8 +398,7 @@ class Player(Entity):
 		self.dp = v2_add(self.dp, v2_mult(self.ddp, dt))
 
 		# change facing direction based on movement
-		if not self.facing_stunned:
-			self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp)
+		self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp)
 
 		# change animation
 		if self.input_ddp == (0, 0):
@@ -490,32 +447,6 @@ def v2_to_facingdirection(currdirection, v2):
 				result = InputMoveDir.RIGHT_DOWN
 			elif dpy < 0:
 				result = InputMoveDir.RIGHT_UP
-
-	return result
-
-class Camera(Entity):
-	def __init__(self):
-		super().__init__()
-		self.target_pos = None
-
-	def update(self, **kwargs):
-		dt = PHYSICS_TIME_STEP
-
-		self.target_pos = v2_add(kwargs['playerpos'], CAMERA_PXOFFSET_FROM_PLAYER)
-		
-		self.set_pos(*self.target_pos)
-
-		# TODO: do some smoothing here to follow the character a bit more loosely?
-		#self.move()
-
-def get_tilebounds_from_camera(cameraentity, mapwidth, mapheight):
-	tile_x_pos, tile_y_pos = v2_int(v2_mult(cameraentity.get_pos(), 1/TILE_WIDTH))
-
-	result = [0, 0, 0, 0]
-	result[0] = max(tile_x_pos - (CAMERA_TILES_WIDE // 2 + 2), 0)
-	result[1] = min(tile_x_pos + CAMERA_TILES_WIDE // 2 + 2, mapwidth-1)
-	result[2] = max(tile_y_pos - (CAMERA_TILES_HIGH // 2 + 2), 0)
-	result[3] = min(tile_y_pos + CAMERA_TILES_HIGH // 2 + 2, mapheight-1)
 
 	return result
 
@@ -570,7 +501,6 @@ def main(argv):
 	simstate = SimulationState()
 	simstate.curr_inputhandler = inputhandlers[0]
 	worldmap = WorldMap()
-	camera = Camera()
 
 	# set player spawn
 	simstate.entities[0].spawn(*worldmap.regionmap().get_spawnpos())
@@ -586,7 +516,7 @@ def main(argv):
 	current_fps = 0
 
 	while not done:
-		frametime = clock.tick(60) # time passed in millisecondss
+		frametime = clock.tick(FRAMERATE_LOCK) # time passed in milliseconds (frame rate in parens)
 		accum += frametime/1000.0
 
 		# display FPS
@@ -646,8 +576,7 @@ def main(argv):
 			# debug stuff
 			## simstate.debugstuff['inputsize'] = len(simstate.curr_input)
 
-			# update camera and animation step (not tied to frame rate!)
-			camera.update(playerpos=simstate.entities[0].get_pos())
+			# update animation step (not tied to frame rate!)
 			simstate.animate()
 
 			#print(simstate.entities[0].get_pos()) # print player pos
@@ -660,18 +589,14 @@ def main(argv):
 		window.fill(neutralgrey) # TODO: change this to off-black??
 
 		regionmap = worldmap.regionmap()
-		cam_bounds = get_tilebounds_from_camera(camera, regionmap.width, regionmap.height)
-		cam_pos = camera.get_pos()
 
 		# draw background tile layers, cache if helpful
-		if (not cam_pos == camera.get_prevpos() or not drawcache.bgtilecache):
-			drawcache.bgtilecache = spritebatch.draw_tilelayer(regionmap, TileLayer.BG, cam_bounds, cam_pos)
+		if (not drawcache.bgtilecache):
+			drawcache.bgtilecache = spritebatch.draw_tilelayer(regionmap, TileLayer.BG)
 		window.blits(drawcache.bgtilecache)
 
 		# draw middleground tile layers, no need to cache since sparse
-		mgtiles = spritebatch.draw_tilelayer(regionmap, TileLayer.MG1, cam_bounds, cam_pos)
-		window.blits(mgtiles)
-		mgtiles = spritebatch.draw_tilelayer(regionmap, TileLayer.MG2, cam_bounds, cam_pos)
+		mgtiles = spritebatch.draw_tilelayer(regionmap, TileLayer.MG)
 		window.blits(mgtiles)
 
 		# DEBUG: draw rects where there are collision in the collision map
@@ -693,7 +618,7 @@ def main(argv):
 		blitlist = []
 		for entity in simstate.entities:
 			if (entity.curr_animation):
-				blitlist.append(spritebatch.draw_entity(entity, cam_pos))
+				blitlist.append(spritebatch.draw_entity(entity))
 		window.blits(blitlist)
 
 		# draw foreground tile layer
@@ -711,7 +636,7 @@ def main(argv):
 		DRAW_DEBUG = False
 		if (DRAW_DEBUG):
 			# DEBUG: get player screen pos for upcoming debug stuff
-			player_screenpos = SpriteBatch.get_screenpos_from_mappos(simstate.entities[0].get_pos(), cam_pos)
+			player_screenpos = SpriteBatch.get_screenpos_from_mappos(simstate.entities[0].get_pos())
 
 			# DEBUG: draw player collision box
 			player_coll_dim = (simstate.entities[0].coll_width, simstate.entities[0].coll_height)

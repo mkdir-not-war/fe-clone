@@ -1,0 +1,6 @@
+1) dodging in combat fills gauge - used to enhance abilities. Does not negate damage,
+	otherwise positioning is meaningless, among other issues
+2) start game choosing two characters. Start game with two characters. Unlock new characters
+	by saving them in the world. Can play with them on *next* run.
+3) consider 1 dungeon per region that allows you fight maps indefinitely to farm pokemon
+	local to that region, but not farm skill points.
