@@ -5,29 +5,32 @@
 		"width" : 1,
 		"height" : 1,
 		"overworld" : true,
-		"connections" : {
-			"TESTBOTHER" : {
+		"connections" : [
+			{
+			 	"region" : "TESTBOTHER",
 				"exit" : "west",
 				"x" : 0,
 				"y" : 0,
 				"cx" : 1,
 				"cy" : 0
 			},
-			"TESTSGATE" : {
+			{
+				"region" : "TESTSGATE",
 				"exit" : "north",
 				"x" : 0,
 				"y" : 0,
 				"cx" : 2,
 				"cy" : 1
 			},
-			"TESTSGATE" : {
+			{
+				"region" : "TESTSGATE",
 				"exit" : "south",
 				"x" : 0,
 				"y" : 0,
 				"cx" : 3,
 				"cy" : 0
 			}
-		}
+		]
 	},
 	"TESTBOTHER" : {
 		"index" : 1,
@@ -35,29 +38,32 @@
 		"width" : 2,
 		"height" : 2,
 		"overworld" : true,
-		"connections" : {
-			"TESTHOUSE" : {
-				"exit" : "north",
+		"connections" : [
+			{
+				"region" : "TESTHOUSE",
+				"exit" : "building",
 				"x" : 1,
 				"y" : 0,
 				"cx" : 1,
 				"cy" : 1
 			},
-			"TESTROAD" : {
+			{
+				"region" : "TESTROAD",
 				"exit" : "east",
 				"x" : 1,
 				"y" : 0,
 				"cx" : 0,
 				"cy" : 0
 			},
-			"TESTSGATE" : {
+			{
+				"region" : "TESTSGATE",
 				"exit" : "north",
 				"x" : 0,
 				"y" : 0,
 				"cx" : 0,
 				"cy" : 1
 			}
-		}
+		]
 	},
 	"TESTHOUSE" : {
 		"index" : 2,
@@ -65,15 +71,16 @@
 		"width" : 2,
 		"height" : 2,
 		"overworld" : false,
-		"connections" : {
-			"TESTBOTHER" : {
-				"exit" : "building",
+		"connections" : [
+			{
+			 	"region" : "TESTBOTHER",
+				"exit" : "south",
 				"x" : 1,
 				"y" : 1,
 				"cx" : 1,
 				"cy" : 0
 			}
-		}
+		]
 	},
 	"TESTSGATE" : {
 		"index" : 3,
@@ -81,36 +88,40 @@
 		"width" : 4,
 		"height" : 2,
 		"overworld" : true,
-		"connections" : {
-			"TESTBOTHER" : {
+		"connections" : [
+			{
+			 	"region" : "TESTBOTHER",
 				"exit" : "south",
 				"x" : 0,
 				"y" : 1,
 				"cx" : 0,
 				"cy" : 0
 			},
-			"TESTROAD" : {
+			{
+				"region" : "TESTROAD",
 				"exit" : "south",
 				"x" : 2,
 				"y" : 1,
 				"cx" : 0,
 				"cy" : 0
 			},
-			"TESTROAD" : {
+			{
+				"region" : "TESTROAD",
 				"exit" : "north",
 				"x" : 3,
 				"y" : 0,
 				"cx" : 0,
 				"cy" : 0
 			},
-			"TESTTEMPLE" : {
+			{
+				"region" : "TESTTEMPLE",
 				"exit" : "north",
 				"x" : 0,
 				"y" : 0,
 				"cx" : 0,
 				"cy" : 1
 			}
-		}
+		]
 	},
 	"TESTTEMPLE" : {
 		"index" : 4,
@@ -118,14 +129,15 @@
 		"width" : 1,
 		"height" : 2,
 		"overworld" : false,
-		"connections" : {
-			"TESTSGATE" : {
+		"connections" : [
+			{
+				"region" : "TESTSGATE",
 				"exit" : "south",
 				"x" : 0,
 				"y" : 1,
 				"cx" : 0,
 				"cy" : 0
 			}
-		}
+		]
 	}
 }

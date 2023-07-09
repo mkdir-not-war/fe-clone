@@ -1,5 +1,6 @@
 from enum import IntEnum
 from random import choice
+from src.getmath import v2_add
 import json
 
 GAMEMAP_TILES_WIDE = 19
@@ -97,9 +98,6 @@ class MapData:
 		self.groundarray = None
 		self.blockarray = None
 
-		# generation flags
-		self.genflag_visited = False
-
 	def print(self):
 		print()
 		printlist = [str(i) for i in self.blockarray]
@@ -153,6 +151,70 @@ def gen_rossbother(mapdata):
 	# fill in tile array in rossbother style
 	pass
 
+class MazeNode:
+	def __init__(self):
+		self.north 		= None
+		self.south 		= None
+		self.east 		= None
+		self.west 		= None
+
+def maze_generator(width, height, nodes):
+	# generate maze!
+	edgeorigins = {}
+	edgenodes = []
+	visitednodes = []
+	nodexy = (0, 0)
+
+	while (len(visitednodes) < height*width):
+		# visit the chosen node
+		nodeindex = nodexy[0] + nodexy[1] * width
+		currnode = nodes[nodeindex]
+		visitednodes.append(nodexy)
+
+		# add neighbors to edge (if they aren't visited)
+		potentialedges = []
+		if (nodexy[0] > 0):
+			potentialedges.append(('west', 	v2_add(nodexy, (-1, 0))))
+		if (nodexy[1] > 0):
+			potentialedges.append(('north', v2_add(nodexy, (0, -1))))
+		if (nodexy[0] < width-1):
+			potentialedges.append(('east', 	v2_add(nodexy, (1,  0))))
+		if (nodexy[1] < height-1):
+			potentialedges.append(('south', v2_add(nodexy, (0,  1))))
+
+		for edgeinfo in potentialedges:
+			direction, edge = edgeinfo
+			if (not edge in visitednodes and not edge in edgenodes):
+				edgeorigins[edge] = (nodeindex, direction)
+				edgenodes.append(edge)
+
+		# choose new node
+		if (len(edgenodes) > 0):
+			nodexy = choice(edgenodes)
+			edgenodes.remove(nodexy)
+			ognodeindex, direction = edgeorigins[nodexy]
+			newnodeindex = nodexy[0] + nodexy[1] * width
+		else:
+			break
+
+	# use edge origins map to set flags
+	for edge in edgeorigins:
+		ogindex, direction = edgeorigins[edge]
+		edgeindex = edge[0] + edge[1] * width
+
+		if direction == 'west':
+			nodes[ogindex].west = edgeindex
+			nodes[edgeindex].east = ogindex
+		elif direction == 'north':
+			nodes[ogindex].north = edgeindex
+			nodes[edgeindex].south = ogindex
+		elif direction == 'east':
+			nodes[ogindex].east = edgeindex
+			nodes[edgeindex].west = ogindex
+		elif direction == 'south':
+			nodes[ogindex].south = edgeindex
+			nodes[edgeindex].north = ogindex
+
 class MapGenerator:
 	def __init__(self):
 		self.allregions = []
@@ -179,8 +241,8 @@ class MapGenerator:
 		# set region exits
 		for region in self.allregions:
 			# exits connecting between regions
-			for connregionname in region.connections:
-				conndata = region.connections[connregionname]
+			for conndata in region.connections:
+				connregionname = conndata["region"]
 				mapindex = region.mapindex + (conndata['y'] * region.width) + conndata['x']
 				connregion = self.allregions[RegionName[connregionname].value]
 				connmapindex = connregion.mapindex + (conndata['cy'] * connregion.width) + conndata['cx']
@@ -196,6 +258,19 @@ class MapGenerator:
 					self.allmaps[mapindex].centerbuildingexit = connmapindex
 
 			# exits within regions (maze algo)
+			mazenodes = [MazeNode() for n in range(region.nummaps)]
+			maze_generator(region.width, region.height, mazenodes)
+			for i in range(len(mazenodes)):
+				mapindex = region.mapindex + i
+				mazenode = mazenodes[i]
+				if mazenode.north != None:
+					self.allmaps[mapindex].northexit = mazenode.north + region.mapindex
+				if mazenode.south != None:
+					self.allmaps[mapindex].southexit = mazenode.south + region.mapindex
+				if mazenode.east != None:
+					self.allmaps[mapindex].eastexit = mazenode.east + region.mapindex
+				if mazenode.west != None:
+					self.allmaps[mapindex].westexit = mazenode.west + region.mapindex
 
 
 ##########################################################################################################
@@ -205,9 +280,32 @@ class MapGenerator:
 def test():
 	mapgen = MapGenerator()
 	mapgen.run()
-	for i in range(len(mapgen.allmaps)):
-		mapdata = mapgen.allmaps[i]
-		print('[%d]'%i, mapdata.regionindex, '^', mapdata.northexit, 'v', mapdata.southexit)
+	for region in mapgen.allregions:
+		print(region.name)
+		print()
+		for y in range(region.height):
+			line = []
+			for x in range(region.width):
+				newnodestr = ''
+				node = mapgen.allmaps[region.mapindex + x + y * region.width]
+
+				if node.westexit != None:
+					newnodestr += '<'
+
+				if node.northexit != None:
+					newnodestr += '^'
+
+				if node.southexit != None:
+					newnodestr += 'v'
+
+				if node.eastexit != None:
+					newnodestr += '>'
+
+				newnodestr += ' '*(len(newnodestr)-4)
+
+				line.append(newnodestr)
+			print(' ' + '\t'.join(line))
+			print()		
 
 def testmaze():
 	width = None
@@ -221,50 +319,32 @@ def testmaze():
 		elif (len(dimsplit) != 0 or width==None or height==None):
 			break
 
-		class Node:
-			def __init__(self):
-				self.north 		= False
-				self.south 		= False
-				self.east 		= False
-				self.west 		= False
+		nodes = [MazeNode() for n in range(width*height)]
+		maze_generator(width, height, nodes)
 
-		nodes = [Node() for i in range(width*height)]
-		
-		# generate maze!
-		edgenodes = [(0, 0)]
-		visitednodes = []
-		nodexy = (0, 0)
+		# print result		
+		print()
+		for y in range(height):
+			line = []
+			for x in range(width):
+				newnodestr = ''
+				node = nodes[x + y * width]
 
-		while (len(edgenodes) > 0):
-			# choose edge node
-			edgenodes.remove(nodexy)
-			nodeindex = nodexy[0] + nodexy[1] * width
-			currnode = nodes[nodeindex]
+				if node.west != None:
+					newnodestr += '<'
+				if node.north != None:
+					newnodestr += '^'
+				if node.south != None:
+					newnodestr += 'v'
+				if node.east != None:
+					newnodestr += '>'
 
-			visitednodes.append(nodexy)
+				newnodestr += ' '*(len(newnodestr)-4)
 
-
-			# add neighbors to edge (if they aren't visited)
-			potentialedges = []
-			if (nodexy[0] > 0):
-				potentialedges.append((nodeindex, v2_add(nodexy, (-1, 0))))
-			if (nodexy[1] > 0):
-				potentialedges.append((nodeindex, v2_add(nodexy, (0, -1))))
-			if (nodexy[0] < width-1):
-				potentialedges.append((nodeindex, v2_add(nodexy, (1,  0))))
-			if (nodexy[1] < height-1):
-				potentialedges.append((nodeindex, v2_add(nodexy, (0,  1))))
-
-			for edge in potentialedges:
-				if (not edge in visitednodes):
-					edgenodes.append(edge)
-
-			# choose new node
-			newnode = choice(edgenodes)
-
-
-		# finally, if nummaps>4, try to add one extra connection randomly to form a single loop
-
+				line.append(newnodestr)
+			print(' ' + '\t'.join(line))
+			print()
+		print()
 
 if __name__=='__main__':
-	testmaze()
+	test()
