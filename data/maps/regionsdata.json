@@ -1,0 +1,94 @@
+{
+	"PILGRIMROAD" : {
+		"zone" : "ROSSBOTHER",
+		"nummaps" : 1,
+		"width" : 1,
+		"height" : 1,
+		
+		"northconnections" : ["ROSSBOTHER"],
+		"southconnections" : [],
+		"eastconnections" : ["PILGRIMSGATE"],
+		"westconnections" : []
+	},
+	"ROSSBOTHER" : {
+		"zone" : "ROSSBOTHER",
+		"nummaps" : 4,
+		"width" : 2,
+		"height" : 2,
+		
+		"northconnections" : [],
+		"southconnections" : [],
+		"eastconnections" : [],
+		"westconnections" : []
+	},
+	"PILGRIMSGATE" : {
+		"zone" : "WESTEND",
+		"nummaps" : 8,
+		"width" : 2,
+		"height" : 4,
+		
+		"northconnections" : [],
+		"southconnections" : ["WESTMARKETSQ"],
+		"eastconnections" : ["OLDWESTBRIDGE"],
+		"westconnections" : ["ROSSBOTHER", "PILGRIMROAD"]
+	},
+	"OLDWESTBRIDGE" : {
+		"zone" : "WESTEND",
+		"nummaps" : 2,
+		"width" : 2,
+		"height" : 1,
+		
+		"northconnections" : [],
+		"southconnections" : [],
+		"eastconnections" : [],
+		"westconnections" : []
+	},
+	"WESTMARKETSQ" : {
+		"zone" : "WESTEND",
+		"nummaps" : 9,
+		"width" : 3,
+		"height" : 3,
+		
+		"northconnections" : [],
+		"southconnections" : [],
+		"eastconnections" : [],
+		"westconnections" : []
+	},
+}
+
+PILGRIMSGATE 	
+"OLDWESTBRIDGE" 	
+"WESTMARKETSQ"	
+# The Mud
+"SAINTSTREET"		
+"NJALBRIDGE"		
+"BLACKSQ"			
+"DOWNSHIRE"		
+"NORTHWHARFS"		
+# The Docks
+"EMPRESSSQ"		
+"EMPORERSQ"		
+"DOCKSMARKET"		
+"ROLLINGBARREL"	
+"WESTWHARFS"		
+# The Brass
+"FOXHILLSQ"		
+"TWINDRAKEHALL"	
+"CASTLETONGREN"	
+# Downbull
+"DOWNBULL"		
+# The Stays
+"EASTWHARFS"		
+"NAVALYARD"		
+"CISTERNSQ"		
+"WIGGINSASYLUM"	
+# East End
+"GALLOWSSQ"		
+"ALLHEROESJAIL"	
+# The Market
+"MARKETSQ"		
+"TEMPLESQ"		
+"PUREWATERTEMPLE"	
+# Rossbother		
+"ROSSBOTHER" 		
+"PILGRIMROAD"		

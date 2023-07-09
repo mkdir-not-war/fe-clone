@@ -16,6 +16,14 @@
 		* APOCALYPSE [must finish Cataclysm first]
 			-> choose difficulty settings like Hades Pact of Punishment
 				^^ one option maybe randomizes the city layout
+	3) [if any character unlocked] CHOOSE TWO CHARACTERS:
+		* MC (default 1)
+		* Sidekick (default 2)
+		* etc. 
+		^^ grey out characters when two are selected, must un-select a 
+		   character to un-grey the others and allow them to be selected
+		* CONFIRM
 	3) very short cutscene, maybe as simple as the player character walking up 
 		into position on the first map, dialogue begins and auto-plays on side.
-	4) playing the game!
+	4) enter free-move map with 2 exits, one to Rossbother, the other to Pilgrim's Gate.
+		* if first time playing, exit to Pilgrim's Gate is blocked!

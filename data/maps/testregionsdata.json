@@ -1,0 +1,46 @@
+{
+	"TESTROAD" : {
+		"zone" : "TESTBOTHER",
+		"width" : 1,
+		"height" : 1,
+		"overworld" : true,
+		
+		"northconnections" : ["TESTBOTHER"],
+		"southconnections" : [],
+		"eastconnections" : ["TESTSGATE"],
+		"westconnections" : []
+	},
+	"TESTBOTHER" : {
+		"zone" : "TESTBOTHER",
+		"width" : 2,
+		"height" : 2,
+		"overworld" : true,
+		
+		"northconnections" : ["TESTHOUSE"],
+		"southconnections" : ["TESTROAD"],
+		"eastconnections" : ["TESTSGATE"],
+		"westconnections" : []
+	},
+	"TESTHOUSE" : {
+		"zone" : "TESTBOTHER",
+		"width" : 3,
+		"height" : 9,
+		"overworld" : false,
+		
+		"northconnections" : [],
+		"southconnections" : ["TESTBOTHER"],
+		"eastconnections" : [],
+		"westconnections" : []
+	},
+	"TESTSGATE" : {
+		"zone" : "TESTEND",
+		"width" : 2,
+		"height" : 3,
+		"overworld" : true,
+		
+		"northconnections" : [],
+		"southconnections" : [],
+		"eastconnections" : ["TESTBOTHER", "TESTROAD"],
+		"westconnections" : []
+	}
+}

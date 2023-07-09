@@ -1,13 +1,18 @@
 import os
 
+'''
+I don't actually know what these do exactly, so I'm commenting them out for now.
+TODO: look them up to get a better understanding.
+
 # Maybe people want to keep watching the joystick feedback even when this
 # window doesn't have focus. Possibly by capturing this window into OBS.
-os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
+#os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
 
 # A tiny performance/latency hit isn't a problem here. Instead, it's more
 # important to keep the desktop compositing effects running fine. Disabling
 # compositing is known to cause issues on KDE/KWin/Plasma/X11 on Linux.
-os.environ["SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"] = "0"
+#os.environ["SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"] = "0"
+'''
 
 import pygame
 from enum import IntEnum
@@ -19,6 +24,7 @@ from src.getmath import *
 from src.myinput import *
 from src.collision import *
 from src.constants import *
+from src.mapgen import *
 import src.myanim as myanim
 
 # window constants (16:9)
@@ -32,8 +38,6 @@ TILEMAP_WIDTH_IN_TILES = 8
 TILEMAP_FRAMES_PER_ANIMATION = 16
 
 # gamemap constants
-GAMEMAP_TILES_WIDE = 19
-GAMEMAP_TILES_HIGH = 15
 GAMEMAP_SCREEN_Y = (WIN_HEIGHT - GAMEMAP_TILES_HIGH * TILE_WIDTH * TILE_ZOOM) // 2
 GAMEMAP_SCREEN_X = WIN_WIDTH - GAMEMAP_TILES_WIDE * TILE_WIDTH * TILE_ZOOM - GAMEMAP_SCREEN_Y
 
@@ -164,7 +168,7 @@ class SpriteBatch:
 				tile_x = tilemapindex - (tile_y * self.tilemap_dim[0])
 
 				# skip if tile is the blank tile
-				if tile_x == 0:
+				if tilemapindex == 0:
 					continue
 
 				tilearea = Rect(
@@ -252,6 +256,8 @@ class RegionMap:
 		]
 
 		self.tile_layers[TileLayer.MG] = [0] * self.width * self.height
+		self.tile_layers[TileLayer.MG][130] = 112
+		
 		self.tile_layers[TileLayer.FG] = [0] * self.width * self.height
 		######################################################################
 
@@ -595,6 +601,8 @@ def main(argv):
 			drawcache.bgtilecache = spritebatch.draw_tilelayer(regionmap, TileLayer.BG)
 		window.blits(drawcache.bgtilecache)
 
+		# TODO: draw overlay grid here, underneath the middleground but over the background
+
 		# draw middleground tile layers, no need to cache since sparse
 		mgtiles = spritebatch.draw_tilelayer(regionmap, TileLayer.MG)
 		window.blits(mgtiles)
@@ -608,7 +616,6 @@ def main(argv):
 					continue
 				screenpos = SpriteBatch.get_screenpos_from_mappos(
 					(x * COLTILE_WIDTH, y * COLTILE_WIDTH), 
-					cam_pos
 				)
 				pygame.draw.rect(window, black, Rect(screenpos, collisionrectdim).get_pyrect(), 1)
 		'''
