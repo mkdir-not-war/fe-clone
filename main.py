@@ -310,16 +310,6 @@ class RegionMap:
 
 		return result
 
-# this is really just a map cache, nothing special going on here
-# maybe we rename when we do refactoring
-class WorldMap:
-	def __init__(self):
-		self.curr_region_index = 0
-		self.regionmaps = [RegionMap()]
-
-	def regionmap(self):
-		return self.regionmaps[self.curr_region_index]
-
 class Entity:
 	def __init__(self):
 		# basic position
@@ -428,18 +418,11 @@ class Player(Entity):
 		self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp)
 
 		# change animation
-		if followingdist2 == None:
-			if self.input_ddp == (0, 0):
+		if self.input_ddp == (0, 0):
+			if followingdist2 == None or self.anim_finished:
 				self.change_animation(PlayerAnimState.IDLE)
-			else:
-				self.change_animation(PlayerAnimState.WALK)
 		else:
-			# this is the following entity, only change to walk if input_ddp len is >= 1
-			if self.input_ddp == (0, 0):
-				if self.anim_finished:
-					self.change_animation(PlayerAnimState.IDLE)
-			else:
-				self.change_animation(PlayerAnimState.WALK)
+			self.change_animation(PlayerAnimState.WALK)
 
 		# flip animation if facing left	
 		if (self.facing_direction in [InputMoveDir.LEFT, InputMoveDir.LEFT_UP, InputMoveDir.LEFT_DOWN]):
@@ -485,7 +468,7 @@ def v2_to_facingdirection(currdirection, v2):
 
 	return result
 
-def check_exit_events(regionmap, controllingentity):
+def check_exit_events(regionmap, activeplayer):
 	pass
 
 # class to hold essentially global vars
@@ -548,10 +531,10 @@ def main(argv):
 	# editor state
 	simstate = SimulationState()
 	simstate.curr_inputhandler = inputhandlers[0]
-	worldmap = WorldMap()
+	currentmap = RegionMap()
 
 	# set player spawn
-	simstate.entities[0].spawn(*worldmap.regionmap().get_spawnpos())
+	simstate.entities[0].spawn(*currentmap.get_spawnpos())
 
 	# drawing caches
 	drawcache = DrawCache()
@@ -620,9 +603,9 @@ def main(argv):
 			# ANSWER: Yes, because the player's attacks often cause the enemies to move back,
 			#	potentially against a wall, for example
 			for entity in simstate.entities:
-				do_collision(worldmap.regionmap(), entity)
+				do_collision(currentmap, entity)
 
-			check_exit_events(worldmap.regionmap(), simstate.entities[0])
+			check_exit_events(currentmap, simstate.entities[0])
 
 			playercollisions = []
 
@@ -641,25 +624,23 @@ def main(argv):
 		# Start drawing
 		window.fill(neutralgrey) # TODO: change this to off-black??
 
-		regionmap = worldmap.regionmap()
-
 		# draw background tile layers, cache if helpful
 		if (not drawcache.bgtilecache):
-			drawcache.bgtilecache = spritebatch.draw_tilelayer(regionmap, TileLayer.BG)
+			drawcache.bgtilecache = spritebatch.draw_tilelayer(currentmap, TileLayer.BG)
 		window.blits(drawcache.bgtilecache)
 
 		# TODO: draw overlay grid here, underneath the middleground but over the background
 
 		# draw middleground tile layers, no need to cache since sparse
-		mgtiles = spritebatch.draw_tilelayer(regionmap, TileLayer.MG)
+		mgtiles = spritebatch.draw_tilelayer(currentmap, TileLayer.MG)
 		window.blits(mgtiles)
 
 		# DEBUG: draw rects where there are collision in the collision map
 		'''
 		collisionrectdim = (COLTILE_WIDTH * TILE_ZOOM + 1, COLTILE_WIDTH * TILE_ZOOM + 1)
-		for y in range(regionmap.height * 2):
-			for x in range(regionmap.width * 2):
-				if (not regionmap.get_colltile(x, y)):
+		for y in range(currentmap.height * 2):
+			for x in range(currentmap.width * 2):
+				if (not currentmap.get_colltile(x, y)):
 					continue
 				screenpos = SpriteBatch.get_screenpos_from_mappos(
 					(x * COLTILE_WIDTH, y * COLTILE_WIDTH), 

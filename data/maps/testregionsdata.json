@@ -5,22 +5,27 @@
 		"width" : 1,
 		"height" : 1,
 		"overworld" : true,
-		"terrainborder" : "south",
 		"connections" : {
 			"TESTBOTHER" : {
 				"exit" : "west",
 				"x" : 0,
-				"y" : 0
+				"y" : 0,
+				"cx" : 1,
+				"cy" : 0
 			},
-			"TESTGATE" : {
+			"TESTSGATE" : {
 				"exit" : "north",
 				"x" : 0,
-				"y" : 0
+				"y" : 0,
+				"cx" : 2,
+				"cy" : 1
 			},
-			"TESTGATE" : {
-				"exit" : "boat,south",
+			"TESTSGATE" : {
+				"exit" : "south",
 				"x" : 0,
-				"y" : 0
+				"y" : 0,
+				"cx" : 3,
+				"cy" : 0
 			}
 		}
 	},
@@ -30,22 +35,27 @@
 		"width" : 2,
 		"height" : 2,
 		"overworld" : true,
-		"terrainborder" : null,
 		"connections" : {
 			"TESTHOUSE" : {
 				"exit" : "north",
 				"x" : 1,
-				"y" : 0
+				"y" : 0,
+				"cx" : 1,
+				"cy" : 1
 			},
 			"TESTROAD" : {
 				"exit" : "east",
 				"x" : 1,
-				"y" : 0
+				"y" : 0,
+				"cx" : 0,
+				"cy" : 0
 			},
-			"TESTGATE" : {
+			"TESTSGATE" : {
 				"exit" : "north",
 				"x" : 0,
-				"y" : 0
+				"y" : 0,
+				"cx" : 0,
+				"cy" : 1
 			}
 		}
 	},
@@ -55,42 +65,50 @@
 		"width" : 2,
 		"height" : 2,
 		"overworld" : false,
-		"terrainborder" : null,
 		"connections" : {
 			"TESTBOTHER" : {
 				"exit" : "building",
 				"x" : 1,
-				"y" : 1
+				"y" : 1,
+				"cx" : 1,
+				"cy" : 0
 			}
 		}
 	},
 	"TESTSGATE" : {
 		"index" : 3,
 		"zone" : "TESTEND",
-		"width" : 3,
+		"width" : 4,
 		"height" : 2,
 		"overworld" : true,
-		"terrainborder" : "north",
 		"connections" : {
 			"TESTBOTHER" : {
 				"exit" : "south",
 				"x" : 0,
-				"y" : 1
+				"y" : 1,
+				"cx" : 0,
+				"cy" : 0
 			},
 			"TESTROAD" : {
 				"exit" : "south",
 				"x" : 2,
-				"y" : 1
+				"y" : 1,
+				"cx" : 0,
+				"cy" : 0
 			},
 			"TESTROAD" : {
-				"exit" : "boat,north",
+				"exit" : "north",
 				"x" : 3,
-				"y" : 0
+				"y" : 0,
+				"cx" : 0,
+				"cy" : 0
 			},
 			"TESTTEMPLE" : {
 				"exit" : "north",
 				"x" : 0,
-				"y" : 0
+				"y" : 0,
+				"cx" : 0,
+				"cy" : 1
 			}
 		}
 	},
@@ -100,12 +118,13 @@
 		"width" : 1,
 		"height" : 2,
 		"overworld" : false,
-		"terrainborder" : null,
 		"connections" : {
 			"TESTSGATE" : {
 				"exit" : "south",
 				"x" : 0,
-				"y" : 1
+				"y" : 1,
+				"cx" : 0,
+				"cy" : 0
 			}
 		}
 	}
