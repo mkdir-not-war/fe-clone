@@ -24,8 +24,8 @@ from src.getmath import *
 from src.myinput import *
 from src.collision import *
 from src.constants import *
-from src.mapgen import *
 import src.myanim as myanim
+from mapgen import *
 
 # window constants (16:9)
 TILE_ZOOM = 1 # eventually go 2 here

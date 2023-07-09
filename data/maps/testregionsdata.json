@@ -4,43 +4,82 @@
 		"width" : 1,
 		"height" : 1,
 		"overworld" : true,
-		
-		"northconnections" : ["TESTBOTHER"],
-		"southconnections" : [],
-		"eastconnections" : ["TESTSGATE"],
-		"westconnections" : []
+		"connections" : {
+			"TESTBOTHER" : {
+				"exit" : "west",
+				"x" : 0,
+				"y" : 0
+			},
+			"TESTGATE" : {
+				"exit" : "north",
+				"x" : 0,
+				"y" : 0
+			},
+			"TESTGATE" : {
+				"exit" : "boat,south",
+				"x" : 0,
+				"y" : 0
+			}
+		}
 	},
 	"TESTBOTHER" : {
 		"zone" : "TESTBOTHER",
 		"width" : 2,
 		"height" : 2,
 		"overworld" : true,
-		
-		"northconnections" : ["TESTHOUSE"],
-		"southconnections" : ["TESTROAD"],
-		"eastconnections" : ["TESTSGATE"],
-		"westconnections" : []
+		"connections" : {
+			"TESTHOUSE" : {
+				"exit" : "north",
+				"x" : 1,
+				"y" : 0
+			},
+			"TESTROAD" : {
+				"exit" : "east",
+				"x" : 1,
+				"y" : 0
+			},
+			"TESTGATE" : {
+				"exit" : "north",
+				"x" : 0,
+				"y" : 0
+			}
+		}
 	},
 	"TESTHOUSE" : {
 		"zone" : "TESTBOTHER",
-		"width" : 3,
-		"height" : 9,
+		"width" : 2,
+		"height" : 2,
 		"overworld" : false,
 		
-		"northconnections" : [],
-		"southconnections" : ["TESTBOTHER"],
-		"eastconnections" : [],
-		"westconnections" : []
+		"connections" : {
+			"TESTBOTHER" : {
+				"exit" : "building",
+				"x" : 1,
+				"y" : 1
+			}
+		}
 	},
 	"TESTSGATE" : {
 		"zone" : "TESTEND",
-		"width" : 2,
-		"height" : 3,
+		"width" : 3,
+		"height" : 2,
 		"overworld" : true,
-		
-		"northconnections" : [],
-		"southconnections" : [],
-		"eastconnections" : ["TESTBOTHER", "TESTROAD"],
-		"westconnections" : []
+		"connections" : {
+			"TESTBOTHER" : {
+				"exit" : "south",
+				"x" : 0,
+				"y" : 1
+			},
+			"TESTROAD" : {
+				"exit" : "south",
+				"x" : 2,
+				"y" : 1
+			},
+			"TESTROAD" : {
+				"exit" : "boat,north",
+				"x" : 3,
+				"y" : 0
+			}
+		}
 	}
 }

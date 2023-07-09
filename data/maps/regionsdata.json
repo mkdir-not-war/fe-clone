@@ -5,7 +5,7 @@
 		"width" : 1,
 		"height" : 1,
 		
-		"northconnections" : ["ROSSBOTHER"],
+		"connections" : ["ROSSBOTHER"],
 		"southconnections" : [],
 		"eastconnections" : ["PILGRIMSGATE"],
 		"westconnections" : []
@@ -63,32 +63,32 @@ PILGRIMSGATE
 "SAINTSTREET"		
 "NJALBRIDGE"		
 "BLACKSQ"			
-"DOWNSHIRE"		
+"DOWNSHIRE" # 3x3 dungeon
 "NORTHWHARFS"		
 # The Docks
 "EMPRESSSQ"		
 "EMPORERSQ"		
 "DOCKSMARKET"		
-"ROLLINGBARREL"	
+"ROLLINGBARREL" # 3x3 dungeon
 "WESTWHARFS"		
 # The Brass
 "FOXHILLSQ"		
-"TWINDRAKEHALL"	
-"CASTLETONGREN"	
+"TWINDRAKEHALL"	# 3x3 dungeon
+"CASTLETONGREN"	# 4x4 dungeon
 # Downbull
-"DOWNBULL"		
+"DOWNBULL"	# 3x4 dungeon
 # The Stays
 "EASTWHARFS"		
 "NAVALYARD"		
 "CISTERNSQ"		
-"WIGGINSASYLUM"	
+"WIGGINSASYLUM"	# 2x6 dungeon
 # East End
 "GALLOWSSQ"		
-"ALLHEROESJAIL"	
+"ALLHEROESJAIL"	# 2x6 dungeon
 # The Market
 "MARKETSQ"		
 "TEMPLESQ"		
-"PUREWATERTEMPLE"	
+"PUREWATERTEMPLE" # 4x4 dungeon
 # Rossbother		
 "ROSSBOTHER" 		
 "PILGRIMROAD"		

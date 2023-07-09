@@ -68,10 +68,7 @@ class RegionData:
 		self.nummaps 	= 0
 		self.overworld  = None
 
-		self.northconnections = []
-		self.southconnections = []
-		self.eastconnections = []
-		self.westconnections = []
+		self.connections = None
 
 	def load(self, name, data):
 		self.name = name
@@ -81,10 +78,7 @@ class RegionData:
 		self.height = h = int(data['height'])
 		self.nummaps = w*h
 		self.overworld = data['overworld']
-		self.northconnections = data['northconnections']
-		self.southconnections = data['southconnections']
-		self.eastconnections = data['eastconnections']
-		self.westconnections = data['westconnections']
+		self.connections = data['connections']
 
 class MapData:
 	def __init__(self):
@@ -147,13 +141,9 @@ def setup_tilearrays(mapdata):
 					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = 1
 					continue
 
-def generate_all_maps():
+def gen_rossbother(mapdata):
+	# fill in tile array in rossbother style
 	pass
-
-def gen_basic():
-	pass
-
-
 
 
 ##########################################################################################################
@@ -161,11 +151,18 @@ def gen_basic():
 ##########################################################################################################
 
 def test():
+	# load region data
 	allregions = []
 	for i in range(RegionName.TOTALREGIONS):
 		allregions.append(RegionData())
 	load_regiondata(allregions)
-	print_regionconnections(allregions)
+
+	# create map data from region data
+	allmaps = []
+	totalnummaps = sum([rdata.nummaps for rdata in allregions])
+	for i in range(totalnummaps):
+		allmaps.append(MapData())
+
 
 if __name__=='__main__':
 	test()
