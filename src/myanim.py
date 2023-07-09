@@ -103,6 +103,7 @@ class Animation:
 			self.curr_frame += 1
 			if (self.curr_frame == self.totalframes-1): #last frame, return true
 				return True
+		return False
 
 	def step_repeat(self):
 		self.step += 1
@@ -111,7 +112,8 @@ class Animation:
 			self.curr_frame += 1
 			if (self.curr_frame == self.totalframes): #past last frame, reset to start
 				self.curr_frame = 0
-				return False
+				return True
+		return False
 
 	def step_boomerang(self):
 		self.step += 1
@@ -121,9 +123,10 @@ class Animation:
 			if (self.curr_frame == self.totalframes): #past last frame, reverse and backup
 				self.vel = -1
 				self.curr_frame = self.totalframes-2
-				return False
+				return True
 			if (self.curr_frame < 0): #past first frame, reverse and backup
 				self.vel = 1
 				self.curr_frame = 1
-				return False
+				return True
+		return False
 		

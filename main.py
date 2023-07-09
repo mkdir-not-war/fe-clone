@@ -48,6 +48,8 @@ PLAYER_MAXSPEED_SQ = PLAYER_MAXSPEED**2
 
 PLAYER_FRICTION = 0.1 * PLAYER_MAXSPEED
 PLAYER_ACCEL = 0.03 * PLAYER_MAXSPEED_SQ
+PLAYER_FOLLOWINGDIST = TILE_WIDTH * 1.2
+PLAYER_FOLLOWINGEPSILON	 = TILE_WIDTH * 0.15
 
 # misc constants
 FRAMERATE_LOCK = 144
@@ -332,6 +334,7 @@ class Entity:
 
 		# animation stuff
 		self.curr_animation = None
+		self.anim_finished = False
 		self.frame_size = 64
 		self.flipanimhorz = False
 		self.facing_direction = None
@@ -370,7 +373,7 @@ class Entity:
 	def get_tile(self):
 		return (self.x // TILE_WIDTH, self.y // TILE_WIDTH)
 
-	def update(self, **kwargs):
+	def update(self, kwargs):
 		pass
 
 class PlayerAnimState(IntEnum):
@@ -390,8 +393,26 @@ class Player(Entity):
 		self.input_ddp = (0, 0)
 		self.animstate = PlayerAnimState.IDLE
 
-	def update(self, **kwargs):
+	def update(self, kwargs):
 		dt = PHYSICS_TIME_STEP
+
+		# set input_ddp if this is the following player
+		followingdist2 = None
+		if 'leader_pos' in kwargs:
+			playerpos = kwargs['leader_pos']
+			target = v2_add(
+				v2_mult(v2_normalize(v2_sub((self.x, self.y), playerpos)), PLAYER_FOLLOWINGDIST), 
+				playerpos
+			)
+			nearesttarget = target # TODO: use A* here to get actual target and movevec
+			movevec = v2_sub(nearesttarget, (self.x, self.y)) 
+			followingdist2 = v2_len2(movevec)
+			if (followingdist2 < PLAYER_FOLLOWINGEPSILON**2):
+				movevec = (0, 0)
+			else:
+				movevec = v2_mult(v2_normalize(movevec), 0.98)
+			self.input_ddp = movevec
+
 
 		# ddp starts as exactly equal to input direction (<= 1.0 length)
 		self.ddp = v2_mult(self.input_ddp, PLAYER_ACCEL)
@@ -407,10 +428,18 @@ class Player(Entity):
 		self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp)
 
 		# change animation
-		if self.input_ddp == (0, 0):
-			self.change_animation(PlayerAnimState.IDLE)
+		if followingdist2 == None:
+			if self.input_ddp == (0, 0):
+				self.change_animation(PlayerAnimState.IDLE)
+			else:
+				self.change_animation(PlayerAnimState.WALK)
 		else:
-			self.change_animation(PlayerAnimState.WALK)
+			# this is the following entity, only change to walk if input_ddp len is >= 1
+			if self.input_ddp == (0, 0):
+				if self.anim_finished:
+					self.change_animation(PlayerAnimState.IDLE)
+			else:
+				self.change_animation(PlayerAnimState.WALK)
 
 		# flip animation if facing left	
 		if (self.facing_direction in [InputMoveDir.LEFT, InputMoveDir.LEFT_UP, InputMoveDir.LEFT_DOWN]):
@@ -456,6 +485,9 @@ def v2_to_facingdirection(currdirection, v2):
 
 	return result
 
+def check_exit_events(regionmap, controllingentity):
+	pass
+
 # class to hold essentially global vars
 class SimulationState:
 	def __init__(self):
@@ -472,17 +504,27 @@ class SimulationState:
 
 		# players, actors, obstacles. Anything that needs to be physically updated
 		self.entities = []
-		self.entities.append(Player()) # player is index 0
-		self.entities[0].coll_width = TILE_WIDTH * 0.4 # half width of collision rect
-		self.entities[0].coll_height = TILE_WIDTH * 0.2 # half height of collision rect
+		# two player characters, at indices 0 and 1.
+		self.entities.append(Player())
+		self.entities.append(Player())
+		self.activeplayer = 0
+		self.followingplayer = 1
+
+		self.entities[0].coll_width = self.entities[1].coll_width = TILE_WIDTH * 0.4 # half width of collision rect
+		self.entities[0].coll_height = self.entities[1].coll_height = TILE_WIDTH * 0.2 # half height of collision rect
 
 	def animate(self):
 		for entity in self.entities:
 			if entity.curr_animation:
-				entity.curr_animation.stepfunc()
+				entity.anim_finished = entity.curr_animation.stepfunc()
 
-	def get_player(self):
-		return self.entities[0]
+	def swap_active_player(self):
+		self.activeplayer = self.activeplayer * -1 + 1
+		self.followingplayer = self.followingplayer * -1 + 1
+		assert(self.activeplayer != self.followingplayer)
+
+	def get_active_player(self):
+		return self.entities[self.activeplayer]
 
 def main(argv):
 	pygame.init()
@@ -566,8 +608,11 @@ def main(argv):
 			################################################################################
 
 			# update all of the entities
-			for entity in simstate.entities:
-				entity.update()
+			for i in range(len(simstate.entities)):
+				kwargs = {}
+				if (i == simstate.followingplayer):
+					kwargs['leader_pos'] = simstate.get_active_player().get_pos()
+				simstate.entities[i].update(kwargs)
 
 			# bound entities by collision
 			# QUESTION: if enemy AI avoids collision, do we really
@@ -576,6 +621,8 @@ def main(argv):
 			#	potentially against a wall, for example
 			for entity in simstate.entities:
 				do_collision(worldmap.regionmap(), entity)
+
+			check_exit_events(worldmap.regionmap(), simstate.entities[0])
 
 			playercollisions = []
 

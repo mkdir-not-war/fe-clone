@@ -4,7 +4,7 @@ from math import pi, tan, sqrt
 import pygame
 
 # constants
-JOYSTICK_DEADZONE_EPSILON = 0.25
+JOYSTICK_DEADZONE_EPSILON = 0.30
 DEGREE_WINDOW_DIAGONAL = 25
 HALFRAD_WINDOW_DIAGONAL = deg2rad(DEGREE_WINDOW_DIAGONAL/2)
 DIAG_SMALL_SLOPE = tan(pi / 4 - HALFRAD_WINDOW_DIAGONAL)
@@ -38,12 +38,16 @@ class BaseInputHandler:
 
 class IH_MovingAround(BaseInputHandler):
 	def handle_input(self, simstate):
-		player_entity = simstate.get_player()
+		player_entity = simstate.get_active_player()
 		inputdata = simstate.inputdata
 
 		# player acceleration directly affected by input
 		movedir = (inputdata.get_var(InputDataIndex.STICK_X), inputdata.get_var(InputDataIndex.STICK_Y))
 		player_entity.input_ddp = movedir
+
+		# swap players with LT
+		if (inputdata.get_var(InputDataIndex.LT) > 0.5 and inputdata.get_var(InputDataIndex.LT, 1) <= 0.5):
+			simstate.swap_active_player()
 
 		'''
 		## move directions ############
@@ -117,6 +121,12 @@ class InputDataBuffer:
 			4	- left trigger
 			5	- right trigger
 		'''
+
+		if (joystick.axis[4] > JOYSTICK_DEADZONE_EPSILON):
+			self.set_var(InputDataIndex.LT, joystick.axis[4])
+		if (joystick.axis[5] > JOYSTICK_DEADZONE_EPSILON):
+			self.set_var(InputDataIndex.RT, joystick.axis[5])
+			
 
 		# TODO: maybe use this instead of stick in some cases? Pokken controller?
 		## joystick.hat[event.hat] = event.value

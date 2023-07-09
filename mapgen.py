@@ -7,56 +7,7 @@ GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
 
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
 
-class RegionName(IntEnum):
-	# Testbother
-	TESTROAD			= 0
-	TESTBOTHER			= 1
-	TESTHOUSE			= 2
-	# Test End
-	TESTSGATE			= 3
-
-	TOTALREGIONS		= 4
-'''
-	# West End
-	PILGRIMSGATE 		= 0
-	OLDWESTBRIDGE 		= 1
-	WESTMARKETSQ		= 2
-	# The Mud
-	SAINTSTREET			= 3
-	NJALBRIDGE			= 4
-	BLACKSQ				= 5
-	DOWNSHIRE			= 6
-	NORTHWHARFS			= 7
-	# The Docks
-	EMPRESSSQ			= 8
-	EMPORERSQ			= 9
-	DOCKSMARKET			= 10
-	ROLLINGBARREL		= 11
-	WESTWHARFS			= 12
-	# The Brass
-	FOXHILLSQ			= 13
-	TWINDRAKEHALL		= 14
-	CASTLETONGREN		= 15
-	# Downbull
-	DOWNBULL			= 16
-	# The Stays
-	EASTWHARFS			= 17
-	NAVALYARD			= 18
-	CISTERNSQ			= 19
-	WIGGINSASYLUM		= 20
-	# East End
-	GALLOWSSQ			= 21
-	ALLHEROESJAIL		= 22
-	# The Market
-	MARKETSQ			= 23
-	TEMPLESQ			= 24
-	PUREWATERTEMPLE		= 25
-	# Rossbother		
-	ROSSBOTHER 			= 26
-	PILGRIMROAD			= 27
-
-	TOTALREGIONS		= 28
-'''
+TOTALREGIONS = 5 # test:5, game:28?
 
 class RegionData:
 	def __init__(self):
@@ -72,7 +23,7 @@ class RegionData:
 
 	def load(self, name, data):
 		self.name = name
-		self.index = RegionName[name].value
+		self.index = int(data['index'])
 		self.zone = data['zone']
 		self.width = w = int(data['width'])
 		self.height = h = int(data['height'])
@@ -145,23 +96,32 @@ def gen_rossbother(mapdata):
 	# fill in tile array in rossbother style
 	pass
 
+class MapGenerator:
+	def __init__(self):
+		self.allregions = []
+		self.allmaps = []
+
+	def run(self):
+		# load region data
+		self.allregions = []
+		for i in range(TOTALREGIONS):
+			self.allregions.append(RegionData())
+		load_regiondata(self.allregions)
+
+		# create map data from region data
+		self.allmaps = []
+		totalnummaps = sum([rdata.nummaps for rdata in self.allregions])
+		for i in range(totalnummaps):
+			self.allmaps.append(MapData())
+
 
 ##########################################################################################################
 ## TEST ##################################################################################################
 ##########################################################################################################
 
 def test():
-	# load region data
-	allregions = []
-	for i in range(RegionName.TOTALREGIONS):
-		allregions.append(RegionData())
-	load_regiondata(allregions)
-
-	# create map data from region data
-	allmaps = []
-	totalnummaps = sum([rdata.nummaps for rdata in allregions])
-	for i in range(totalnummaps):
-		allmaps.append(MapData())
+	mapgen = MapGenerator()
+	mapgen.run()
 
 
 if __name__=='__main__':
