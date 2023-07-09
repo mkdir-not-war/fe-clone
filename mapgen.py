@@ -8,6 +8,15 @@ GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
 
 class RegionName(IntEnum):
+	# Testbother
+	TESTROAD			= 0
+	TESTBOTHER			= 1
+	TESTHOUSE			= 2
+	# Test End
+	TESTSGATE			= 3
+
+	TOTALREGIONS		= 4
+'''
 	# West End
 	PILGRIMSGATE 		= 0
 	OLDWESTBRIDGE 		= 1
@@ -47,17 +56,35 @@ class RegionName(IntEnum):
 	PILGRIMROAD			= 27
 
 	TOTALREGIONS		= 28
+'''
 
 class RegionData:
 	def __init__(self):
+		self.index		= -1
+		self.name 		= None
+		self.zone 		= None
 		self.width 		= 0
 		self.height 	= 0
 		self.nummaps 	= 0
+		self.overworld  = None
 
 		self.northconnections = []
 		self.southconnections = []
 		self.eastconnections = []
 		self.westconnections = []
+
+	def load(self, name, data):
+		self.name = name
+		self.index = RegionName[name].value
+		self.zone = data['zone']
+		self.width = w = int(data['width'])
+		self.height = h = int(data['height'])
+		self.nummaps = w*h
+		self.overworld = data['overworld']
+		self.northconnections = data['northconnections']
+		self.southconnections = data['southconnections']
+		self.eastconnections = data['eastconnections']
+		self.westconnections = data['westconnections']
 
 class MapData:
 	def __init__(self):
@@ -83,11 +110,17 @@ def load_regiondata(allregions):
 	rawregiondata = json.load(fin)
 	fin.close()
 
-	for region in rawregiondata:
-		print(region)
+	i = 0
+	for regionname in rawregiondata:
+		data = rawregiondata[regionname]
+		allregions[i].load(regionname, data)
+		i += 1
+
+	allregions.sort(key=lambda r: r.index)
 
 def print_regionconnections(allregions):
-	pass
+	for region in allregions:
+		print(region.index, region.name, region.zone)
 
 def setup_tilearrays(mapdata):
 	mapdata.groundarray = [0] * GAMEMAP_SIZE
@@ -128,7 +161,9 @@ def gen_basic():
 ##########################################################################################################
 
 def test():
-	allregions = [RegionData()] * 4
+	allregions = []
+	for i in range(RegionName.TOTALREGIONS):
+		allregions.append(RegionData())
 	load_regiondata(allregions)
 	print_regionconnections(allregions)
 
