@@ -4,7 +4,6 @@
 		"zone" : "TESTBOTHER",
 		"width" : 1,
 		"height" : 1,
-		"overworld" : true,
 		"connections" : [
 			{
 			 	"region" : "TESTBOTHER",
@@ -37,7 +36,6 @@
 		"zone" : "TESTBOTHER",
 		"width" : 2,
 		"height" : 2,
-		"overworld" : true,
 		"connections" : [
 			{
 				"region" : "TESTHOUSE",
@@ -70,7 +68,6 @@
 		"zone" : "TESTBOTHER",
 		"width" : 2,
 		"height" : 2,
-		"overworld" : false,
 		"connections" : [
 			{
 			 	"region" : "TESTBOTHER",
@@ -87,7 +84,6 @@
 		"zone" : "TESTEND",
 		"width" : 4,
 		"height" : 2,
-		"overworld" : true,
 		"connections" : [
 			{
 			 	"region" : "TESTBOTHER",
@@ -115,11 +111,11 @@
 			},
 			{
 				"region" : "TESTTEMPLE",
-				"exit" : "north",
+				"exit" : "building",
 				"x" : 0,
 				"y" : 0,
 				"cx" : 0,
-				"cy" : 1
+				"cy" : 0
 			}
 		]
 	},
@@ -127,14 +123,13 @@
 		"index" : 4,
 		"zone" : "TESTEND",
 		"width" : 1,
-		"height" : 2,
-		"overworld" : false,
+		"height" : 1,
 		"connections" : [
 			{
 				"region" : "TESTSGATE",
 				"exit" : "south",
 				"x" : 0,
-				"y" : 1,
+				"y" : 0,
 				"cx" : 0,
 				"cy" : 0
 			}

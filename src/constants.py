@@ -1,3 +1,5 @@
 # import anything?
 
 TILE_WIDTH = 32
+GAMEMAP_TILES_WIDE = 19
+GAMEMAP_TILES_HIGH = 15

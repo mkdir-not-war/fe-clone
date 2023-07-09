@@ -1,4 +1,4 @@
-from src.constants import TILE_WIDTH
+from src.constants import TILE_WIDTH, GAMEMAP_TILES_WIDE, GAMEMAP_TILES_HIGH
 from src.getmath import *
 from math import sqrt, pi, cos, sin
 
@@ -126,7 +126,7 @@ def do_collision(regionmap, entity):
 	maxtilex = int(maxtilex / COLTILE_WIDTH) + 1 # one past to include the final tile
 	maxtiley = int(maxtiley / COLTILE_WIDTH) + 1
 
-	coltilearraylength = regionmap.width * regionmap.height * COLLISION_MAPTILE_SPLITLEN**2
+	coltilearraylength = GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH * COLLISION_MAPTILE_SPLITLEN**2
 
 	tRemaining = 1.0 # how much of the timestep would have been thru the collision-space
 
@@ -141,7 +141,7 @@ def do_collision(regionmap, entity):
 		# check walls of each collider-tile
 		for tiley in range(mintiley, maxtiley):
 			for tilex in range(mintilex, maxtilex):
-				testtileindex = tilex + (regionmap.width*COLLISION_MAPTILE_SPLITLEN) * tiley
+				testtileindex = tilex + (GAMEMAP_TILES_WIDE*COLLISION_MAPTILE_SPLITLEN) * tiley
 
 				# skip checking out of bounds on flat array
 				if (testtileindex < 0 or 

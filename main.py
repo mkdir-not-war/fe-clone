@@ -25,7 +25,7 @@ from src.myinput import *
 from src.collision import *
 from src.constants import *
 import src.myanim as myanim
-from mapgen import *
+from src.mapgen import *
 
 # window constants (16:9)
 TILE_ZOOM = 1 # eventually go 2 here
@@ -42,7 +42,7 @@ GAMEMAP_SCREEN_Y = (WIN_HEIGHT - GAMEMAP_TILES_HIGH * TILE_WIDTH * TILE_ZOOM) //
 GAMEMAP_SCREEN_X = WIN_WIDTH - GAMEMAP_TILES_WIDE * TILE_WIDTH * TILE_ZOOM - GAMEMAP_SCREEN_Y
 
 # physics constants
-PLAYER_MAXSPEED = 10.0 * TILE_WIDTH
+PLAYER_MAXSPEED = 18.0 * TILE_WIDTH
 PLAYER_MINSPEED_SQ = 1.0
 PLAYER_MAXSPEED_SQ = PLAYER_MAXSPEED**2
 
@@ -162,9 +162,9 @@ class SpriteBatch:
 
 		result = []
 
-		for y in range(regionmap.height):
-			for x in range(regionmap.width):
-				tilemapindex = regionmap.tile_layers[tilelayer][y * regionmap.width + x]
+		for y in range(GAMEMAP_TILES_HIGH):
+			for x in range(GAMEMAP_TILES_WIDE):
+				tilemapindex = regionmap.tile_layers[tilelayer][y * GAMEMAP_TILES_WIDE + x]
 				#print(tilemapindex)
 				tile_y = tilemapindex // self.tilemap_dim[0]
 				tile_x = tilemapindex - (tile_y * self.tilemap_dim[0])
@@ -231,12 +231,7 @@ class SpriteBatch:
 class RegionMap:
 	def __init__(self):
 
-		# whole map is always shown (no zooming or camera mvmt). Dimensions are constant, all maps same size.
-		self.width = GAMEMAP_TILES_WIDE
-		self.height = GAMEMAP_TILES_HIGH
-
 		self.tile_layers = [[]] * 3
-
 
 		####### test combat map -- grass and fenced-in area ################
 		self.tile_layers[TileLayer.BG] = [
@@ -257,16 +252,19 @@ class RegionMap:
 			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2
 		]
 
-		self.tile_layers[TileLayer.MG] = [0] * self.width * self.height
+		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
 		self.tile_layers[TileLayer.MG][130] = 112
 		
-		self.tile_layers[TileLayer.FG] = [0] * self.width * self.height
+		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
 		######################################################################
 
 		self.collisionmap = self.load_collisionmap()
 
 		# TODO: change this to one of four directions, and extrapolate both character positions from that
 		self.curr_spawn_tile = (7, 6) 
+
+	def load_from_mapdata(self, mapdata, enteringfromdir):
+		pass
 
 	def get_spawnpos(self):
 		return (
@@ -290,7 +288,7 @@ class RegionMap:
 		xoff = coltilex % 2
 		yoff = coltiley % 2 # because collision is 2x2 grid on each tile
 
-		collint = self.collisionmap[tilex + tiley * self.width]
+		collint = self.collisionmap[tilex + tiley * GAMEMAP_TILES_WIDE]
 		bitmask = (0x1 << yoff*8) << xoff*4
 
 		return collint & bitmask > 0
@@ -299,7 +297,7 @@ class RegionMap:
 		# go through each of the tile layers, OR the coll ints
 		result = []
 
-		for i in range(self.width*self.height):
+		for i in range(GAMEMAP_TILES_WIDE*GAMEMAP_TILES_HIGH):
 			collint = 0
 
 			collint |= tilemap_coldata[self.tile_layers[TileLayer.BG][i]]
@@ -649,11 +647,13 @@ def main(argv):
 		'''
 		
 
-		# draw entities
+		# draw entities in order of y position
 		blitlist = []
-		for entity in simstate.entities:
-			if (entity.curr_animation):
-				blitlist.append(spritebatch.draw_entity(entity))
+		entityids_by_y = list(range(len(simstate.entities)))
+		entityids_by_y.sort(key=lambda e: simstate.entities[e].y)
+		for eid in entityids_by_y:
+			if (simstate.entities[eid].curr_animation):
+				blitlist.append(spritebatch.draw_entity(simstate.entities[eid]))
 		window.blits(blitlist)
 
 		# draw foreground tile layer

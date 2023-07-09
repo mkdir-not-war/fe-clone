@@ -1,10 +1,9 @@
 from enum import IntEnum
 from random import choice
 from src.getmath import v2_add
+from src.constants import GAMEMAP_TILES_WIDE, GAMEMAP_TILES_HIGH
 import json
 
-GAMEMAP_TILES_WIDE = 19
-GAMEMAP_TILES_HIGH = 15
 GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
 
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
@@ -55,9 +54,10 @@ class RegionName(IntEnum):
 	MARKETSQ			= 23
 	TEMPLESQ			= 24
 	PUREWATERTEMPLE		= 25
+	INNERSANCTUM		= 26 ################ << TODO: add this to data
 	# Rossbother		
-	ROSSBOTHER 			= 26
-	PILGRIMROAD			= 27
+	ROSSBOTHER 			= 27
+	PILGRIMROAD			= 28
 '''
 
 class RegionData:
@@ -68,7 +68,6 @@ class RegionData:
 		self.width 		= 0
 		self.height 	= 0
 		self.nummaps 	= 0
-		self.overworld  = None
 
 		self.connections = None
 		self.mapindex 	= -1
@@ -80,7 +79,6 @@ class RegionData:
 		self.width = w = int(data['width'])
 		self.height = h = int(data['height'])
 		self.nummaps = w*h
-		self.overworld = data['overworld']
 		self.connections = data['connections']
 
 class MapData:
@@ -92,7 +90,7 @@ class MapData:
 		self.eastexit = None
 		self.westexit = None
 		self.southexit = None
-		self.centerbuildingexit = None
+		self.buildingexit = None
 
 		# tiles
 		self.groundarray = None
@@ -147,9 +145,15 @@ def setup_tilearrays(mapdata):
 					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = 1
 					continue
 
-def gen_rossbother(mapdata):
+#############################################################################################
+## GEN TILE ARRAYS FOR EACH REGION ##########################################################
+#############################################################################################
+
+def gentilearray_rossbother(mapdata):
 	# fill in tile array in rossbother style
 	pass
+
+## END TILE ARRAY GEN #######################################################################
 
 class MazeNode:
 	def __init__(self):
@@ -255,7 +259,7 @@ class MapGenerator:
 				elif (conndata['exit'] == "west"):
 					self.allmaps[mapindex].westexit = connmapindex
 				elif (conndata['exit'] == "building"):
-					self.allmaps[mapindex].centerbuildingexit = connmapindex
+					self.allmaps[mapindex].buildingexit = connmapindex
 
 			# exits within regions (maze algo)
 			mazenodes = [MazeNode() for n in range(region.nummaps)]
@@ -280,6 +284,8 @@ class MapGenerator:
 def test():
 	mapgen = MapGenerator()
 	mapgen.run()
+
+	# print results
 	for region in mapgen.allregions:
 		print(region.name)
 		print()
@@ -295,56 +301,20 @@ def test():
 				if node.northexit != None:
 					newnodestr += '^'
 
+				if node.buildingexit != None:
+					newnodestr += 'B'
+
 				if node.southexit != None:
 					newnodestr += 'v'
 
 				if node.eastexit != None:
 					newnodestr += '>'
 
-				newnodestr += ' '*(len(newnodestr)-4)
+				newnodestr += ' '*(len(newnodestr)-5)
 
 				line.append(newnodestr)
 			print(' ' + '\t'.join(line))
 			print()		
-
-def testmaze():
-	width = None
-	height = None
-	while(1):
-		dims = input('map dimensions <x,y>: ')
-		dimsplit = dims.split(',')
-		if (len(dimsplit) == 2):
-			width = int(dimsplit[0])
-			height = int(dimsplit[1])
-		elif (len(dimsplit) != 0 or width==None or height==None):
-			break
-
-		nodes = [MazeNode() for n in range(width*height)]
-		maze_generator(width, height, nodes)
-
-		# print result		
-		print()
-		for y in range(height):
-			line = []
-			for x in range(width):
-				newnodestr = ''
-				node = nodes[x + y * width]
-
-				if node.west != None:
-					newnodestr += '<'
-				if node.north != None:
-					newnodestr += '^'
-				if node.south != None:
-					newnodestr += 'v'
-				if node.east != None:
-					newnodestr += '>'
-
-				newnodestr += ' '*(len(newnodestr)-4)
-
-				line.append(newnodestr)
-			print(' ' + '\t'.join(line))
-			print()
-		print()
 
 if __name__=='__main__':
 	test()
