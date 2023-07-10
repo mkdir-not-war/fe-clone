@@ -1,12 +1,13 @@
 from enum import IntEnum
 from random import choice
 from src.getmath import v2_add
-from src.constants import GAMEMAP_TILES_WIDE, GAMEMAP_TILES_HIGH
+from src.constants import *
 import json
 
 GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
 
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
+PATH_TO_COLLISIONDATA = './data/maps/collisiontilemap.dat'
 
 TOTALREGIONS = 5 # test:5, game:28?
 
@@ -59,6 +60,89 @@ class RegionName(IntEnum):
 	ROSSBOTHER 			= 27
 	PILGRIMROAD			= 28
 '''
+
+class TileLayer(IntEnum):
+	BG 		= 0
+	MG 		= 1
+	FG 		= 2
+
+class RegionMap:
+	def __init__(self, coldata):
+
+		self.tile_layers = [[]] * 3
+
+		####### test combat map -- grass and fenced-in area ################
+		self.tile_layers[TileLayer.BG] = [
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2,
+			4, 2, 3, 4, 5, 10, 11, 12, 13, 2, 3, 4, 5, 2, 3, 5, 2, 3, 4,
+			3, 4, 2, 3, 4, 12, 13, 10, 11, 5, 2, 3, 4, 5, 2, 4, 3, 4, 2,
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2,
+			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3, 
+			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 5, 3, 4, 2, 5, 3,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2,
+			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3,
+			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 5, 4, 2, 3,
+			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2, 3, 4,
+			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 5, 3, 4, 2, 5,
+			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2
+		]
+
+		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
+		self.tile_layers[TileLayer.MG][130] = 112
+		
+		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
+		######################################################################
+
+		self.collisionmap = self.load_collisionmap(coldata)
+
+		# TODO: change this to one of four directions, and extrapolate both character positions from that
+		self.curr_spawn_tile = (7, 6) 
+
+	def get_spawnpos(self):
+		# offset pixels so player position is in center of tile indicated
+		return (
+			self.curr_spawn_tile[0]*TILE_WIDTH + TILE_WIDTH//2,
+			self.curr_spawn_tile[1]*TILE_WIDTH + TILE_WIDTH//2
+		)
+
+	'''
+	use this for int-map of collision tiles
+
+	0x0000_1234 =>
+
+		1  2
+
+		3  4 (not that we would ever use 2, 3 or 4. Just showing them here for illustration purpose)
+
+	'''
+	def get_colltile(self, coltilex, coltiley):
+		tilex = coltilex // 2
+		tiley = coltiley // 2
+		xoff = coltilex % 2
+		yoff = coltiley % 2 # because collision is 2x2 grid on each tile
+
+		collint = self.collisionmap[tilex + tiley * GAMEMAP_TILES_WIDE]
+		bitmask = (0x1 << yoff*8) << xoff*4
+
+		return collint & bitmask > 0
+
+	def load_collisionmap(self, coldata):
+		# go through each of the tile layers, OR the coll ints
+		result = []
+
+		for i in range(GAMEMAP_TILES_WIDE*GAMEMAP_TILES_HIGH):
+			collint = 0
+
+			collint |= coldata[self.tile_layers[TileLayer.BG][i]]
+			collint |= coldata[self.tile_layers[TileLayer.MG][i]]
+			# NOTE: foreground (fg) layer does not collide
+
+			result.append(collint)
+
+		return result
 
 class RegionData:
 	def __init__(self):
@@ -219,10 +303,37 @@ def maze_generator(width, height, nodes):
 			nodes[ogindex].south = edgeindex
 			nodes[edgeindex].north = ogindex
 
+class AdjacentMapDirection(IntEnum):
+	NORTH 		= 0
+	SOUTH		= 1
+	EAST 		= 2
+	WEST		= 3
+	BUILDING	= 4
+
+	TOTAL		= 5
+
 class MapGenerator:
 	def __init__(self):
 		self.allregions = []
 		self.allmaps = []
+
+		# collision data for tilemaps (same for all tilemaps, as long as they follow the template)
+		colfin = open(PATH_TO_COLLISIONDATA, 'r')
+		self.tilemap_coldata = [int(i) for i in colfin.read().split(' ')]
+		colfin.close()
+
+		self.curr_regionmap = RegionMap(self.tilemap_coldata)
+
+		self.adj_regionmaps = [RegionMap(self.tilemap_coldata) for i in range(AdjacentMapDirection.TOTAL)]
+
+	def get_currmap(self):
+		return self.curr_regionmap
+
+	def load_regionmap_fromindex(self, mapdata_index):
+		pass
+
+	def load_adjacentregionmap(self, adjacent_map_dir):
+		pass
 
 	def run(self):
 		# load region data

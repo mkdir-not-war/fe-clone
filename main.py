@@ -28,7 +28,7 @@ import src.myanim as myanim
 from src.mapgen import *
 
 # window constants (16:9)
-TILE_ZOOM = 1 # eventually go 2 here
+TILE_ZOOM = 2 # eventually go 2 here
 WIN_WIDTH = 960 * TILE_ZOOM
 WIN_HEIGHT = 540 * TILE_ZOOM
 
@@ -68,17 +68,7 @@ white = pygame.Color('white')
 pygame.font.init()
 font_arial16 = pygame.font.Font('./data/fonts/ARI.ttf', 16)
 
-# collision data for tilemaps (same for all tilemaps, as long as they follow the template)
-colfin = open('./data/maps/collisiontilemap.dat', 'r')
-tilemap_coldata = [int(i) for i in colfin.read().split(' ')]
-colfin.close()
-
 ######## ENUMS #################
-
-class TileLayer(IntEnum):
-	BG 		= 0
-	MG 		= 1
-	FG 		= 2
 
 class GameInputMode(IntEnum):
 	MENUMODE		= 0
@@ -228,85 +218,7 @@ class SpriteBatch:
 		
 		return result
 
-class RegionMap:
-	def __init__(self):
 
-		self.tile_layers = [[]] * 3
-
-		####### test combat map -- grass and fenced-in area ################
-		self.tile_layers[TileLayer.BG] = [
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2,
-			4, 2, 3, 4, 5, 10, 11, 12, 13, 2, 3, 4, 5, 2, 3, 5, 2, 3, 4,
-			3, 4, 2, 3, 4, 12, 13, 10, 11, 5, 2, 3, 4, 5, 2, 4, 3, 4, 2,
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2,
-			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3, 
-			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 5, 3, 4, 2, 5, 3,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2,
-			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3,
-			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 5, 4, 2, 3,
-			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2, 3, 4,
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 5, 3, 4, 2, 5,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2
-		]
-
-		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
-		self.tile_layers[TileLayer.MG][130] = 112
-		
-		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
-		######################################################################
-
-		self.collisionmap = self.load_collisionmap()
-
-		# TODO: change this to one of four directions, and extrapolate both character positions from that
-		self.curr_spawn_tile = (7, 6) 
-
-	def load_from_mapdata(self, mapdata, enteringfromdir):
-		pass
-
-	def get_spawnpos(self):
-		return (
-			self.curr_spawn_tile[0]*TILE_WIDTH + TILE_WIDTH//2,
-			self.curr_spawn_tile[1]*TILE_WIDTH + TILE_WIDTH//2
-		)
-
-	'''
-	use this for int-map of collision tiles
-
-	0x0000_1234 =>
-
-		1  2
-
-		3  4 (not that we would ever use 2, 3 or 4. Just showing them here for illustration purpose)
-
-	'''
-	def get_colltile(self, coltilex, coltiley):
-		tilex = coltilex // 2
-		tiley = coltiley // 2
-		xoff = coltilex % 2
-		yoff = coltiley % 2 # because collision is 2x2 grid on each tile
-
-		collint = self.collisionmap[tilex + tiley * GAMEMAP_TILES_WIDE]
-		bitmask = (0x1 << yoff*8) << xoff*4
-
-		return collint & bitmask > 0
-
-	def load_collisionmap(self):
-		# go through each of the tile layers, OR the coll ints
-		result = []
-
-		for i in range(GAMEMAP_TILES_WIDE*GAMEMAP_TILES_HIGH):
-			collint = 0
-
-			collint |= tilemap_coldata[self.tile_layers[TileLayer.BG][i]]
-			collint |= tilemap_coldata[self.tile_layers[TileLayer.MG][i]]
-			# NOTE: foreground (fg) layer does not collide
-
-			result.append(collint)
-
-		return result
 
 class Entity:
 	def __init__(self):
@@ -466,7 +378,7 @@ def v2_to_facingdirection(currdirection, v2):
 
 	return result
 
-def check_exit_events(regionmap, activeplayer):
+def check_exit_events(mapgen, activeplayer):
 	pass
 
 # class to hold essentially global vars
@@ -529,10 +441,10 @@ def main(argv):
 	# editor state
 	simstate = SimulationState()
 	simstate.curr_inputhandler = inputhandlers[0]
-	currentmap = RegionMap()
+	mapgen = MapGenerator()
 
 	# set player spawn
-	simstate.entities[0].spawn(*currentmap.get_spawnpos())
+	simstate.entities[0].spawn(*mapgen.get_currmap().get_spawnpos())
 
 	# drawing caches
 	drawcache = DrawCache()
@@ -595,25 +507,14 @@ def main(argv):
 					kwargs['leader_pos'] = simstate.get_active_player().get_pos()
 				simstate.entities[i].update(kwargs)
 
-			# bound entities by collision
-			# QUESTION: if enemy AI avoids collision, do we really
-			# 	need to check collision on any entities other than the player?
-			# ANSWER: Yes, because the player's attacks often cause the enemies to move back,
-			#	potentially against a wall, for example
-			for entity in simstate.entities:
-				do_collision(currentmap, entity)
+			# bound player entities by collision
+			do_collision(mapgen.get_currmap(), simstate.entities[simstate.activeplayer])
+			do_collision(mapgen.get_currmap(), simstate.entities[simstate.followingplayer])
 
-			check_exit_events(currentmap, simstate.entities[0])
-
-			playercollisions = []
-
-			# debug stuff
-			## simstate.debugstuff['inputsize'] = len(simstate.curr_input)
+			check_exit_events(mapgen, simstate.entities[simstate.activeplayer])
 
 			# update animation step (not tied to frame rate!)
 			simstate.animate()
-
-			#print(simstate.entities[0].get_pos()) # print player pos
 
 		################################################################################
 		# DRAW! ########################################################################
@@ -624,28 +525,14 @@ def main(argv):
 
 		# draw background tile layers, cache if helpful
 		if (not drawcache.bgtilecache):
-			drawcache.bgtilecache = spritebatch.draw_tilelayer(currentmap, TileLayer.BG)
+			drawcache.bgtilecache = spritebatch.draw_tilelayer(mapgen.get_currmap(), TileLayer.BG)
 		window.blits(drawcache.bgtilecache)
 
 		# TODO: draw overlay grid here, underneath the middleground but over the background
 
 		# draw middleground tile layers, no need to cache since sparse
-		mgtiles = spritebatch.draw_tilelayer(currentmap, TileLayer.MG)
+		mgtiles = spritebatch.draw_tilelayer(mapgen.get_currmap(), TileLayer.MG)
 		window.blits(mgtiles)
-
-		# DEBUG: draw rects where there are collision in the collision map
-		'''
-		collisionrectdim = (COLTILE_WIDTH * TILE_ZOOM + 1, COLTILE_WIDTH * TILE_ZOOM + 1)
-		for y in range(currentmap.height * 2):
-			for x in range(currentmap.width * 2):
-				if (not currentmap.get_colltile(x, y)):
-					continue
-				screenpos = SpriteBatch.get_screenpos_from_mappos(
-					(x * COLTILE_WIDTH, y * COLTILE_WIDTH), 
-				)
-				pygame.draw.rect(window, black, Rect(screenpos, collisionrectdim).get_pyrect(), 1)
-		'''
-		
 
 		# draw entities in order of y position
 		blitlist = []
