@@ -1,15 +1,35 @@
 from enum import IntEnum
 from random import choice
-from src.getmath import v2_add
-from src.constants import *
 import json
 
-GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
+'''
+from getmath import v2_add
+from constants import *
+
+PATH_TO_REGIONDATA = '../data/maps/testregionsdata.json'
+PATH_TO_COLLISIONDATA = '../data/maps/collisiontilemap.dat'
+'''
+
+from src.getmath import v2_add
+from src.constants import *
 
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
 PATH_TO_COLLISIONDATA = './data/maps/collisiontilemap.dat'
 
+GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
+
+
+
+SPAWNTILES_FROM_EDGE = 4
+
 TOTALREGIONS = 5 # test:5, game:28?
+
+def get_tilepos_center(tilexy):
+	# offset pixels so player position is in center of tile indicated
+	return (
+		tilexy[0]*TILE_WIDTH + TILE_WIDTH//2,
+		tilexy[1]*TILE_WIDTH + int(TILE_WIDTH * 3/4)
+	)
 
 class RegionName(IntEnum):
 	# Testbother
@@ -21,92 +41,147 @@ class RegionName(IntEnum):
 	TESTTEMPLE			= 4
 
 '''
+	# Rossbother	
+	PILGRIMROAD			= 0	
+	ROSSBOTHER 			= 1
 	# West End
-	PILGRIMSGATE 		= 0
-	OLDWESTBRIDGE 		= 1
-	WESTMARKETSQ		= 2
+	PILGRIMSGATE 		= 2
+	OLDWESTBRIDGE 		= 3
+	WESTMARKETSQ		= 4
 	# The Mud
-	SAINTSTREET			= 3
-	NJALBRIDGE			= 4
-	BLACKSQ				= 5
-	DOWNSHIRE			= 6
-	NORTHWHARFS			= 7
+	SAINTSTREET			= 5
+	NJALBRIDGE			= 6
+	BLACKSQ				= 7
+	DOWNSHIRE			= 8
+	NORTHWHARFS			= 9
 	# The Docks
-	EMPRESSSQ			= 8
-	EMPORERSQ			= 9
-	DOCKSMARKET			= 10
-	ROLLINGBARREL		= 11
-	WESTWHARFS			= 12
+	EMPRESSSQ			= 10
+	EMPORERSQ			= 11
+	DOCKSMARKET			= 12
+	ROLLINGBARREL		= 13
+	WESTWHARFS			= 14
 	# The Brass
-	FOXHILLSQ			= 13
-	TWINDRAKEHALL		= 14
-	CASTLETONGREN		= 15
+	FOXHILLSQ			= 15
+	TWINDRAKEHALL		= 16
+	CASTLETONGREN		= 17
 	# Downbull
-	DOWNBULL			= 16
+	DOWNBULL			= 18
 	# The Stays
-	EASTWHARFS			= 17
-	NAVALYARD			= 18
-	CISTERNSQ			= 19
-	WIGGINSASYLUM		= 20
+	EASTWHARFS			= 19
+	NAVALYARD			= 20
+	CISTERNSQ			= 21
+	WIGGINSASYLUM		= 22
 	# East End
-	GALLOWSSQ			= 21
-	ALLHEROESJAIL		= 22
+	GALLOWSSQ			= 23
+	ALLHEROESJAIL		= 24
 	# The Market
-	MARKETSQ			= 23
-	TEMPLESQ			= 24
-	PUREWATERTEMPLE		= 25
-	INNERSANCTUM		= 26 ################ << TODO: add this to data
-	# Rossbother		
-	ROSSBOTHER 			= 27
-	PILGRIMROAD			= 28
+	MARKETSQ			= 25
+	TEMPLESQ			= 26
+	PUREWATERTEMPLE		= 27
+	INNERSANCTUM		= 28 ################ << TODO: add this to data
+	
 '''
+
+class ExitDirection(IntEnum):
+	NORTH 		= 0
+	SOUTH		= 1
+	EAST 		= 2
+	WEST		= 3
+	BUILDING	= 4
+
+	TOTAL		= 5
 
 class TileLayer(IntEnum):
 	BG 		= 0
 	MG 		= 1
 	FG 		= 2
 
+class MapDataTile(IntEnum):
+	BLANK		= 0
+	# ground array tiles
+	GROUND1		= 1
+	GROUND2		= 2
+	IMPGROUND	= 3
+	# block array tiles
+	WALL		= 4
+	STRUCTURE	= 5
+	DECORATION	= 6
+	SPECIAL1	= 7
+	SPECIAL2	= 8
+
 class RegionMap:
-	def __init__(self, coldata):
-
+	def __init__(self):
 		self.tile_layers = [[]] * 3
+		self.tile_layers[TileLayer.BG] = [0] * GAMEMAP_SIZE
+		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_SIZE	
+		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_SIZE
+		self.collisionmap = [0] * GAMEMAP_SIZE
 
-		####### test combat map -- grass and fenced-in area ################
-		self.tile_layers[TileLayer.BG] = [
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2,
-			4, 2, 3, 4, 5, 10, 11, 12, 13, 2, 3, 4, 5, 2, 3, 5, 2, 3, 4,
-			3, 4, 2, 3, 4, 12, 13, 10, 11, 5, 2, 3, 4, 5, 2, 4, 3, 4, 2,
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2,
-			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3, 
-			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 5, 3, 4, 2, 5, 3,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2,
-			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 5, 4, 2, 3,
-			5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 2, 5, 3, 4,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 5, 4, 2, 3,
-			4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 3, 4, 2, 3, 4,
-			2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 5, 3, 4, 2, 5,
-			3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 2, 4, 3, 4, 2
-		]
+	'''
+	MapData:
 
-		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
-		self.tile_layers[TileLayer.MG][130] = 112
-		
-		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_TILES_WIDE * GAMEMAP_TILES_HIGH
-		######################################################################
+		self.regionindex = regionindex
+
+		# exits (index in allmaps of connected map)
+		self.exits = [None] * ExitDirection.TOTAL
+
+		# tiles
+		self.groundarray = None
+		self.blockarray = None
+
+	'''
+
+	def load_mapdata(self, mapdata, coldata):
+		self.tile_layers[TileLayer.BG] = [0] * GAMEMAP_SIZE
+		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_SIZE	
+		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_SIZE
+
+		# TODO: eventually use MapDataTile to load proper sprite indices from tilemap
+		SOLOWALLSPRITEINDEX = 48
+		GROUNDTILES = [2, 3, 4, 5]
+
+		for i in range(GAMEMAP_SIZE):
+			self.tile_layers[TileLayer.BG][i] = choice(GROUNDTILES)
+
+		for k in range(GAMEMAP_SIZE):
+			if (mapdata.blockarray[k] == MapDataTile.WALL):
+				self.tile_layers[TileLayer.MG][k] = SOLOWALLSPRITEINDEX
 
 		self.collisionmap = self.load_collisionmap(coldata)
 
-		# TODO: change this to one of four directions, and extrapolate both character positions from that
-		self.curr_spawn_tile = (7, 6) 
+	def get_spawntiles(self, entrancedir):
+		if (entrancedir == ExitDirection.SOUTH):
+			edgetile = (GAMEMAP_TILES_WIDE//2, GAMEMAP_TILES_HIGH-1)
+			pos1 = v2_add(edgetile, (0, -SPAWNTILES_FROM_EDGE))
+			pos2 = v2_add(edgetile, (0, -(SPAWNTILES_FROM_EDGE-2)))
+			return (pos1, pos2)
 
-	def get_spawnpos(self):
-		# offset pixels so player position is in center of tile indicated
-		return (
-			self.curr_spawn_tile[0]*TILE_WIDTH + TILE_WIDTH//2,
-			self.curr_spawn_tile[1]*TILE_WIDTH + TILE_WIDTH//2
-		)
+		elif (entrancedir == ExitDirection.NORTH):
+			edgetile = (GAMEMAP_TILES_WIDE//2, 0)
+			pos1 = v2_add(edgetile, (0, SPAWNTILES_FROM_EDGE))
+			pos2 = v2_add(edgetile, (0, (SPAWNTILES_FROM_EDGE-2)))
+			return (pos1, pos2)
+
+		elif (entrancedir == ExitDirection.WEST):
+			edgetile = (0, GAMEMAP_TILES_HIGH//2)
+			pos1 = v2_add(edgetile, (SPAWNTILES_FROM_EDGE), 0)
+			pos2 = v2_add(edgetile, ((SPAWNTILES_FROM_EDGE-2), 0))
+			return (pos1, pos2)
+
+		elif (entrancedir == ExitDirection.EAST):
+			edgetile = (GAMEMAP_TILES_WIDE-1, GAMEMAP_TILES_HIGH//2)
+			pos1 = v2_add(edgetile, (-SPAWNTILES_FROM_EDGE), 0)
+			pos2 = v2_add(edgetile, (-(SPAWNTILES_FROM_EDGE-2), 0))
+			return (pos1, pos2)
+
+		elif (entrancedir == ExitDirection.BUILDING):
+			centertile = (GAMEMAP_TILES_WIDE//2, GAMEMAP_TILES_HIGH//2-1)
+			pos1 = v2_add(edgetile, (0, SPAWNTILES_FROM_EDGE))
+			pos2 = v2_add(edgetile, (0, (SPAWNTILES_FROM_EDGE-2)))
+			return (pos1, pos2)
+
+		else:
+			assert('unrecognized spawntile: %s' % str(entrancedir))
 
 	'''
 	use this for int-map of collision tiles
@@ -133,7 +208,7 @@ class RegionMap:
 		# go through each of the tile layers, OR the coll ints
 		result = []
 
-		for i in range(GAMEMAP_TILES_WIDE*GAMEMAP_TILES_HIGH):
+		for i in range(GAMEMAP_SIZE):
 			collint = 0
 
 			collint |= coldata[self.tile_layers[TileLayer.BG][i]]
@@ -170,11 +245,7 @@ class MapData:
 		self.regionindex = regionindex
 
 		# exits (index in allmaps of connected map)
-		self.northexit = None
-		self.eastexit = None
-		self.westexit = None
-		self.southexit = None
-		self.buildingexit = None
+		self.exits = [None] * ExitDirection.TOTAL
 
 		# tiles
 		self.groundarray = None
@@ -205,28 +276,28 @@ def print_regionconnections(allregions):
 		print(region.index, region.name, region.zone)
 
 def setup_tilearrays(mapdata):
-	mapdata.groundarray = [0] * GAMEMAP_SIZE
-	mapdata.blockarray = [0] * GAMEMAP_SIZE
+	mapdata.groundarray = [MapDataTile.GROUND1] * GAMEMAP_SIZE
+	mapdata.blockarray = [MapDataTile.BLANK] * GAMEMAP_SIZE
 
 	# frame map with blockers, skipping exit squares
 	for j in range(GAMEMAP_TILES_HIGH):
 		for i in range(GAMEMAP_TILES_WIDE):
 
 			if i==1:
-				if not mapdata.westexit or j-1!=GAMEMAP_TILES_HIGH//2:
-					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = 1
+				if not mapdata.exits[ExitDirection.WEST] or j!=GAMEMAP_TILES_HIGH//2:
+					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 			if i==GAMEMAP_TILES_WIDE-2:
-				if not mapdata.eastexit or j-1!=GAMEMAP_TILES_HIGH//2:
-					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = 1
+				if not mapdata.exits[ExitDirection.EAST] or j!=GAMEMAP_TILES_HIGH//2:
+					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 			if j==1:
-				if not mapdata.northexit or j-1!=GAMEMAP_TILES_WIDE//2:
-					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = 1
+				if not mapdata.exits[ExitDirection.NORTH] or i!=GAMEMAP_TILES_WIDE//2:
+					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 			if j==GAMEMAP_TILES_HIGH-2:
-				if not mapdata.southexit or j-1!=GAMEMAP_TILES_WIDE//2:
-					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = 1
+				if not mapdata.exits[ExitDirection.SOUTH] or i!=GAMEMAP_TILES_WIDE//2:
+					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 
 #############################################################################################
@@ -262,13 +333,13 @@ def maze_generator(width, height, nodes):
 		# add neighbors to edge (if they aren't visited)
 		potentialedges = []
 		if (nodexy[0] > 0):
-			potentialedges.append(('west', 	v2_add(nodexy, (-1, 0))))
+			potentialedges.append((ExitDirection.WEST, 	v2_add(nodexy, (-1, 0))))
 		if (nodexy[1] > 0):
-			potentialedges.append(('north', v2_add(nodexy, (0, -1))))
+			potentialedges.append((ExitDirection.NORTH, v2_add(nodexy, (0, -1))))
 		if (nodexy[0] < width-1):
-			potentialedges.append(('east', 	v2_add(nodexy, (1,  0))))
+			potentialedges.append((ExitDirection.EAST, 	v2_add(nodexy, (1,  0))))
 		if (nodexy[1] < height-1):
-			potentialedges.append(('south', v2_add(nodexy, (0,  1))))
+			potentialedges.append((ExitDirection.SOUTH, v2_add(nodexy, (0,  1))))
 
 		for edgeinfo in potentialedges:
 			direction, edge = edgeinfo
@@ -290,27 +361,18 @@ def maze_generator(width, height, nodes):
 		ogindex, direction = edgeorigins[edge]
 		edgeindex = edge[0] + edge[1] * width
 
-		if direction == 'west':
+		if direction == ExitDirection.WEST:
 			nodes[ogindex].west = edgeindex
 			nodes[edgeindex].east = ogindex
-		elif direction == 'north':
+		elif direction == ExitDirection.NORTH:
 			nodes[ogindex].north = edgeindex
 			nodes[edgeindex].south = ogindex
-		elif direction == 'east':
+		elif direction == ExitDirection.EAST:
 			nodes[ogindex].east = edgeindex
 			nodes[edgeindex].west = ogindex
-		elif direction == 'south':
+		elif direction == ExitDirection.SOUTH:
 			nodes[ogindex].south = edgeindex
 			nodes[edgeindex].north = ogindex
-
-class AdjacentMapDirection(IntEnum):
-	NORTH 		= 0
-	SOUTH		= 1
-	EAST 		= 2
-	WEST		= 3
-	BUILDING	= 4
-
-	TOTAL		= 5
 
 class MapGenerator:
 	def __init__(self):
@@ -322,15 +384,24 @@ class MapGenerator:
 		self.tilemap_coldata = [int(i) for i in colfin.read().split(' ')]
 		colfin.close()
 
-		self.curr_regionmap = RegionMap(self.tilemap_coldata)
+		self.curr_regionmap = RegionMap()
 
-		self.adj_regionmaps = [RegionMap(self.tilemap_coldata) for i in range(AdjacentMapDirection.TOTAL)]
+		self.adj_regionmaps = [RegionMap() for i in range(ExitDirection.TOTAL)]
 
 	def get_currmap(self):
 		return self.curr_regionmap
 
-	def load_regionmap_fromindex(self, mapdata_index):
-		pass
+	def load_regionmaps_fromindex(self, mapdata_index=None):
+		if mapdata_index == None:
+			mapdata_index = self.allregions[RegionName.TESTROAD].mapindex
+
+		mapdata = self.allmaps[mapdata_index]
+		self.curr_regionmap.load_mapdata(mapdata, self.tilemap_coldata)
+
+		for i in range(ExitDirection.TOTAL):
+			exit_mapindex = mapdata.exits[i]
+			if exit_mapindex != None:
+				self.adj_regionmaps[i].load_mapdata(self.allmaps[exit_mapindex], self.tilemap_coldata)
 
 	def load_adjacentregionmap(self, adjacent_map_dir):
 		pass
@@ -362,15 +433,15 @@ class MapGenerator:
 				connregion = self.allregions[RegionName[connregionname].value]
 				connmapindex = connregion.mapindex + (conndata['cy'] * connregion.width) + conndata['cx']
 				if (conndata['exit'] == "north"):
-					self.allmaps[mapindex].northexit = connmapindex
+					self.allmaps[mapindex].exits[ExitDirection.NORTH] = connmapindex
 				elif (conndata['exit'] == "south"):
-					self.allmaps[mapindex].southexit = connmapindex
+					self.allmaps[mapindex].exits[ExitDirection.SOUTH] = connmapindex
 				elif (conndata['exit'] == "east"):
-					self.allmaps[mapindex].eastexit = connmapindex
+					self.allmaps[mapindex].exits[ExitDirection.EAST] = connmapindex
 				elif (conndata['exit'] == "west"):
-					self.allmaps[mapindex].westexit = connmapindex
+					self.allmaps[mapindex].exits[ExitDirection.WEST] = connmapindex
 				elif (conndata['exit'] == "building"):
-					self.allmaps[mapindex].buildingexit = connmapindex
+					self.allmaps[mapindex].exits[ExitDirection.BUILDING] = connmapindex
 
 			# exits within regions (maze algo)
 			mazenodes = [MazeNode() for n in range(region.nummaps)]
@@ -379,19 +450,25 @@ class MapGenerator:
 				mapindex = region.mapindex + i
 				mazenode = mazenodes[i]
 				if mazenode.north != None:
-					self.allmaps[mapindex].northexit = mazenode.north + region.mapindex
+					self.allmaps[mapindex].exits[ExitDirection.NORTH] = mazenode.north + region.mapindex
 				if mazenode.south != None:
-					self.allmaps[mapindex].southexit = mazenode.south + region.mapindex
+					self.allmaps[mapindex].exits[ExitDirection.SOUTH] = mazenode.south + region.mapindex
 				if mazenode.east != None:
-					self.allmaps[mapindex].eastexit = mazenode.east + region.mapindex
+					self.allmaps[mapindex].exits[ExitDirection.EAST] = mazenode.east + region.mapindex
 				if mazenode.west != None:
-					self.allmaps[mapindex].westexit = mazenode.west + region.mapindex
+					self.allmaps[mapindex].exits[ExitDirection.WEST] = mazenode.west + region.mapindex
+
+		# generate tiles in each map
+		for mapindex in range(len(self.allmaps)):
+			setup_tilearrays(self.allmaps[mapindex])
+			# TODO: generate more detail specific to each region
 
 
 ##########################################################################################################
 ## TEST ##################################################################################################
 ##########################################################################################################
 
+'''
 def test():
 	mapgen = MapGenerator()
 	mapgen.run()
@@ -406,19 +483,19 @@ def test():
 				newnodestr = ''
 				node = mapgen.allmaps[region.mapindex + x + y * region.width]
 
-				if node.westexit != None:
+				if node.exits[ExitDirection.WEST] != None:
 					newnodestr += '<'
 
-				if node.northexit != None:
+				if node.exits[ExitDirection.NORTH] != None:
 					newnodestr += '^'
 
-				if node.buildingexit != None:
+				if node.exits[ExitDirection.BUILDING] != None:
 					newnodestr += 'B'
 
-				if node.southexit != None:
+				if node.exits[ExitDirection.SOUTH] != None:
 					newnodestr += 'v'
 
-				if node.eastexit != None:
+				if node.exits[ExitDirection.EAST] != None:
 					newnodestr += '>'
 
 				newnodestr += ' '*(len(newnodestr)-5)
@@ -426,6 +503,7 @@ def test():
 				line.append(newnodestr)
 			print(' ' + '\t'.join(line))
 			print()		
+'''
 
 if __name__=='__main__':
 	test()

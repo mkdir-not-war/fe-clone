@@ -28,7 +28,7 @@ import src.myanim as myanim
 from src.mapgen import *
 
 # window constants (16:9)
-TILE_ZOOM = 2 # eventually go 2 here
+TILE_ZOOM = 1 # eventually go 2 here
 WIN_WIDTH = 960 * TILE_ZOOM
 WIN_HEIGHT = 540 * TILE_ZOOM
 
@@ -298,8 +298,10 @@ class Player(Entity):
 
 		# set input_ddp if this is the following player
 		followingdist2 = None
+		vec2player = None
 		if 'leader_pos' in kwargs:
 			playerpos = kwargs['leader_pos']
+			vec2player = v2_sub(playerpos, (self.x, self.y))
 			target = v2_add(
 				v2_mult(v2_normalize(v2_sub((self.x, self.y), playerpos)), PLAYER_FOLLOWINGDIST), 
 				playerpos
@@ -324,8 +326,11 @@ class Player(Entity):
 		self.move(v2_add(v2_mult(self.ddp, 0.5 * dt**2), v2_mult(self.dp, dt))) # change pos before velocity
 		self.dp = v2_add(self.dp, v2_mult(self.ddp, dt))
 
-		# change facing direction based on movement
-		self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp)
+		# change facing direction based on movement (or face the player if following)
+		if followingdist2 == None:
+			self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp)
+		else:
+			self.facing_direction = v2_to_facingdirection(self.facing_direction, vec2player)
 
 		# change animation
 		if self.input_ddp == (0, 0):
@@ -442,9 +447,13 @@ def main(argv):
 	simstate = SimulationState()
 	simstate.curr_inputhandler = inputhandlers[0]
 	mapgen = MapGenerator()
+	mapgen.run()
+	mapgen.load_regionmaps_fromindex() # default: Region 0 Map 0
 
 	# set player spawn
-	simstate.entities[0].spawn(*mapgen.get_currmap().get_spawnpos())
+	spawntiles = mapgen.get_currmap().get_spawntiles(ExitDirection.SOUTH)
+	simstate.entities[0].spawn(*get_tilepos_center(spawntiles[0]))
+	simstate.entities[1].spawn(*get_tilepos_center(spawntiles[1]))
 
 	# drawing caches
 	drawcache = DrawCache()
