@@ -241,8 +241,8 @@ class Entity:
 
 		# collision stuff
 		# width and height are half the length of the rectangle -- position is in the center of the rect
-		self.coll_width = 0 # since we only have width and height, 
-		self.coll_height = 0 # entity collision shapes are only rectangles?
+		self.coll_width = self.frame_size//2 # since we only have width and height, 
+		self.coll_height = self.frame_size//2 # entity collision shapes are only rectangles?
 
 	def get_prevpos(self):
 		return (self.prev_x, self.prev_y)
@@ -276,6 +276,24 @@ class Entity:
 	def update(self, kwargs):
 		pass
 
+class Entity_MapExit(Entity):
+	def __init__(self, exitdirection):
+		super().__init__()
+		self.curr_animation = myanim.Animation()
+		
+		if (exitdirection == ExitDirection.NORTH or exitdirection == ExitDirection.BUILDING):
+			myanim.load_animation(self.curr_animation, 'exit', 'north')
+		elif (exitdirection == ExitDirection.SOUTH):
+			myanim.load_animation(self.curr_animation, 'exit', 'south')
+		elif (exitdirection == ExitDirection.EAST):
+			myanim.load_animation(self.curr_animation, 'exit', 'east-west')
+		elif (exitdirection == ExitDirection.WEST):
+			myanim.load_animation(self.curr_animation, 'exit', 'east-west')
+			self.flipanimhorz = True
+
+def check_exit_events(mapgen, activeplayer):
+	pass
+
 class PlayerAnimState(IntEnum):
 	IDLE = 0
 	WALK = 1
@@ -283,7 +301,7 @@ class PlayerAnimState(IntEnum):
 # NOTE: player does not have player-specific variables -- everything goes in entity
 # player is really just an Init function and an Update function. That's it.
 # Still useful to inherit Entity because we can use the Update function polymorphed
-class Player(Entity):
+class Entity_Player(Entity):
 	def __init__(self):
 		super().__init__()
 		self.curr_animation = myanim.Animation()
@@ -340,7 +358,7 @@ class Player(Entity):
 			self.change_animation(PlayerAnimState.WALK)
 
 		# flip animation if facing left	
-		if (self.facing_direction in [InputMoveDir.LEFT, InputMoveDir.LEFT_UP, InputMoveDir.LEFT_DOWN]):
+		if (self.facing_direction == InputMoveDir.LEFT):
 			self.flipanimhorz = True
 		else:
 			self.flipanimhorz = False
@@ -354,37 +372,19 @@ class Player(Entity):
 			elif newanimstate == PlayerAnimState.WALK:
 				myanim.load_animation(self.curr_animation, 'player', 'walk-side')
 
-# hexagonal facing directions -- no pure up/down.
+# just face left or right, no need for other directions
 def v2_to_facingdirection(currdirection, v2):
 	result = currdirection
-
 	if v2 != (0, 0):
 		dpx, dpy = v2
 		# discrete thumbstick/keyboard directions
 		if dpx > 0:
-			if dpx**2 > dpy**2:
-				result = InputMoveDir.RIGHT
-			elif dpy < 0:
-				result = InputMoveDir.RIGHT_UP
-			elif dpy > 0:
-				result = InputMoveDir.RIGHT_DOWN
+			result = InputMoveDir.RIGHT
 		elif dpx < 0:
-			if dpx**2 > dpy**2:
-				result = InputMoveDir.LEFT
-			elif dpy < 0:
-				result = InputMoveDir.LEFT_UP
-			elif dpy > 0:
-				result = InputMoveDir.LEFT_DOWN
+			result = InputMoveDir.LEFT
 		else: # no x-direction, default facing right
-			if dpy > 0:
-				result = InputMoveDir.RIGHT_DOWN
-			elif dpy < 0:
-				result = InputMoveDir.RIGHT_UP
-
+			result = InputMoveDir.RIGHT
 	return result
-
-def check_exit_events(mapgen, activeplayer):
-	pass
 
 # class to hold essentially global vars
 class SimulationState:
@@ -403,13 +403,18 @@ class SimulationState:
 		# players, actors, obstacles. Anything that needs to be physically updated
 		self.entities = []
 		# two player characters, at indices 0 and 1.
-		self.entities.append(Player())
-		self.entities.append(Player())
+		self.entities.append(Entity_Player())
+		self.entities.append(Entity_Player())
 		self.activeplayer = 0
 		self.followingplayer = 1
 
 		self.entities[0].coll_width = self.entities[1].coll_width = TILE_WIDTH * 0.4 # half width of collision rect
 		self.entities[0].coll_height = self.entities[1].coll_height = TILE_WIDTH * 0.2 # half height of collision rect
+
+		# five exits, at indices 2, 3, 4, 5, 6
+		self.exitindex = 2
+		for i in range(1):#ExitDirection.TOTAL):
+			self.entities.append(Entity_MapExit(ExitDirection.NORTH))
 
 	def animate(self):
 		for entity in self.entities:
@@ -452,8 +457,11 @@ def main(argv):
 
 	# set player spawn
 	spawntiles = mapgen.get_currmap().get_spawntiles(ExitDirection.SOUTH)
-	simstate.entities[0].spawn(*get_tilepos_center(spawntiles[0]))
-	simstate.entities[1].spawn(*get_tilepos_center(spawntiles[1]))
+	simstate.entities[0].spawn(*get_tilepos_center(spawntiles[0], percenty=0.75))
+	simstate.entities[1].spawn(*get_tilepos_center(spawntiles[1], percenty=0.75))
+	
+	# spawn exit entities
+	simstate.entities[2].spawn(*get_tilepos_center(EXIT_TILES[ExitDirection.NORTH]))
 
 	# drawing caches
 	drawcache = DrawCache()

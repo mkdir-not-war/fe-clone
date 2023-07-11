@@ -1,7 +1,6 @@
 {
 	"styles" : "onetime | repeat | boomerang",
 
-
 	"player" : {
 		"idle-side" : {
 			"row" : 0,
@@ -10,37 +9,31 @@
 			"speed" : 12
 		},
 		"walk-side" : {
-			"row" : 3,
+			"row" : 1,
 			"frames" : 6,
 			"style" : "repeat",
 			"speed" : 12
 		}
 	},
 
-	"todo" : {
-		"idle-up" : {
-			"row" : 1,
-			"frames" : 3,
-			"style" : "boomerang",
-			"speed" : 16
-		},
-		"idle-down" : {
+	"exit" : {
+		"north" : {
 			"row" : 2,
-			"frames" : 3,
+			"frames" : 2,
 			"style" : "boomerang",
-			"speed" : 16
+			"speed" : 30
 		},
-		"walk-up" : {
+		"south" : {
+			"row" : 3,
+			"frames" : 2,
+			"style" : "boomerang",
+			"speed" : 30
+		},
+		"east-west" : {
 			"row" : 4,
-			"frames" : 6,
-			"style" : "repeat",
-			"speed" : 16
-		},
-		"walk-down" : {
-			"row" : 5,
-			"frames" : 6,
-			"style" : "repeat",
-			"speed" : 16
+			"frames" : 2,
+			"style" : "boomerang",
+			"speed" : 30
 		}
 	}
 }

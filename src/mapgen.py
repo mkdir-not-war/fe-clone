@@ -10,7 +10,7 @@ PATH_TO_REGIONDATA = '../data/maps/testregionsdata.json'
 PATH_TO_COLLISIONDATA = '../data/maps/collisiontilemap.dat'
 '''
 
-from src.getmath import v2_add
+from src.getmath import v2_add, v2_mult
 from src.constants import *
 
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
@@ -20,15 +20,15 @@ GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
 
 
 
-SPAWNTILES_FROM_EDGE = 4
+SPAWNTILES_FROM_EDGE = 3
 
 TOTALREGIONS = 5 # test:5, game:28?
 
-def get_tilepos_center(tilexy):
+def get_tilepos_center(tilexy, percentx=0.5, percenty=0.5):
 	# offset pixels so player position is in center of tile indicated
 	return (
-		tilexy[0]*TILE_WIDTH + TILE_WIDTH//2,
-		tilexy[1]*TILE_WIDTH + int(TILE_WIDTH * 3/4)
+		tilexy[0]*TILE_WIDTH + int(TILE_WIDTH * percentx),
+		tilexy[1]*TILE_WIDTH + int(TILE_WIDTH * percenty)
 	)
 
 class RegionName(IntEnum):
@@ -91,6 +91,14 @@ class ExitDirection(IntEnum):
 
 	TOTAL		= 5
 
+EXIT_TILES = {
+	ExitDirection.NORTH 	: (GAMEMAP_TILES_WIDE//2, 	0),
+	ExitDirection.SOUTH 	: (GAMEMAP_TILES_WIDE//2, 	GAMEMAP_TILES_HIGH-1),
+	ExitDirection.EAST 		: (GAMEMAP_TILES_WIDE-1, 	GAMEMAP_TILES_HIGH//2),
+	ExitDirection.WEST 		: (0, 						GAMEMAP_TILES_HIGH//2),
+	ExitDirection.BUILDING 	: (GAMEMAP_TILES_WIDE//2, 	GAMEMAP_TILES_HIGH//2-1)
+}
+
 class TileLayer(IntEnum):
 	BG 		= 0
 	MG 		= 1
@@ -150,38 +158,24 @@ class RegionMap:
 		self.collisionmap = self.load_collisionmap(coldata)
 
 	def get_spawntiles(self, entrancedir):
+		offsetvec = None
 		if (entrancedir == ExitDirection.SOUTH):
-			edgetile = (GAMEMAP_TILES_WIDE//2, GAMEMAP_TILES_HIGH-1)
-			pos1 = v2_add(edgetile, (0, -SPAWNTILES_FROM_EDGE))
-			pos2 = v2_add(edgetile, (0, -(SPAWNTILES_FROM_EDGE-2)))
-			return (pos1, pos2)
-
+			offsetvec = (0, -1)
 		elif (entrancedir == ExitDirection.NORTH):
-			edgetile = (GAMEMAP_TILES_WIDE//2, 0)
-			pos1 = v2_add(edgetile, (0, SPAWNTILES_FROM_EDGE))
-			pos2 = v2_add(edgetile, (0, (SPAWNTILES_FROM_EDGE-2)))
-			return (pos1, pos2)
-
+			offsetvec = (0, 1)
 		elif (entrancedir == ExitDirection.WEST):
-			edgetile = (0, GAMEMAP_TILES_HIGH//2)
-			pos1 = v2_add(edgetile, (SPAWNTILES_FROM_EDGE), 0)
-			pos2 = v2_add(edgetile, ((SPAWNTILES_FROM_EDGE-2), 0))
-			return (pos1, pos2)
-
+			offsetvec = (1, 0)
 		elif (entrancedir == ExitDirection.EAST):
-			edgetile = (GAMEMAP_TILES_WIDE-1, GAMEMAP_TILES_HIGH//2)
-			pos1 = v2_add(edgetile, (-SPAWNTILES_FROM_EDGE), 0)
-			pos2 = v2_add(edgetile, (-(SPAWNTILES_FROM_EDGE-2), 0))
-			return (pos1, pos2)
-
+			offsetvec = (-1, 0)
 		elif (entrancedir == ExitDirection.BUILDING):
-			centertile = (GAMEMAP_TILES_WIDE//2, GAMEMAP_TILES_HIGH//2-1)
-			pos1 = v2_add(edgetile, (0, SPAWNTILES_FROM_EDGE))
-			pos2 = v2_add(edgetile, (0, (SPAWNTILES_FROM_EDGE-2)))
-			return (pos1, pos2)
+			offsetvec = (0, 1)
 
-		else:
-			assert('unrecognized spawntile: %s' % str(entrancedir))
+		edgetile = EXIT_TILES[entrancedir]
+		
+		return (
+			v2_add(edgetile, v2_mult(offsetvec, SPAWNTILES_FROM_EDGE)),
+			v2_add(edgetile, v2_mult(offsetvec, SPAWNTILES_FROM_EDGE-2))
+		)
 
 	'''
 	use this for int-map of collision tiles
