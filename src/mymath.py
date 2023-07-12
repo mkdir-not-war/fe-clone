@@ -132,9 +132,18 @@ class Rect:
 		result = (self.width, self.height)
 		return result
 
+	def set_dim(self, w, h):
+		self.width = w
+		self.height = h
+
 	def move(self, dp):
 		self.x += dp[0]
 		self.y += dp[1]
+		return self
+
+	def translate(self, p):
+		self.x = p[0]
+		self.y = p[1]
 		return self
 
 	def get_center(self):
@@ -180,12 +189,13 @@ class Rect:
 		return result
 
 	def collides_rect(self, rect):
-		sum_rect = Rect(
-			(self.x-rect.width/2.0, self.y-rect.height/2.0), 
-			(self.width+rect.width, self.height+rect.height)
-		)
 		point = rect.get_center()
-		result = sum_rect.contains_point(point)
+		result = (
+			point[0] > self.x-rect.width/2.0 and
+			point[0] < self.x+self.width+rect.width/2.0 and
+			point[1] > self.y-rect.height/2.0 and
+			point[1] < self.y+self.height+rect.height/2.0
+		)
 		return result
 
 	def contains_rect(self, rect):

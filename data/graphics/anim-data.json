@@ -23,13 +23,13 @@
 			"style" : "boomerang",
 			"speed" : 30
 		},
-		"south" : {
+		"east-west" : {
 			"row" : 3,
 			"frames" : 2,
 			"style" : "boomerang",
 			"speed" : 30
 		},
-		"east-west" : {
+		"south" : {
 			"row" : 4,
 			"frames" : 2,
 			"style" : "boomerang",

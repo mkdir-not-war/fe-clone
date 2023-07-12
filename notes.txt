@@ -10,3 +10,39 @@
  ^^ animated tiles are at the top of the tilesheet png,
     hard code how many rows are animated, don't display them
     in the tilepicker for static tiles
+
+===== CONTROLS =====
+START	- pause menu (instant pause in any context, except in pause menu oviously)
+
+** In Free Move **
+	STICK 	- move
+	A		- n/a
+	B		- n/a
+	SELECT	- open current character skill menu
+	LT		- open dropdown with zone & region name & current goal
+	RT		- swap character
+
+** In Combat Enemy Turn **
+	n/a
+
+** In Combat Player Turn **
+	STICK 	- move
+	A		- hold briefly to confirm attack
+	B		- go back to attack choice wheel
+	SELECT	- open current character skill menu (not editable while in combat)
+	LT		- while holding, show popups over all entity HP bars - display buffs/debuffs
+	RT		- rotate attack direction 90 degrees
+
+** In Combat Attack Wheel **
+	[OPTIONS: slot1, slot2, slot3, spiritslot1, spiritslot2, defend]
+		^^ defend acts as both "move" and "pass", but allows directional blocking
+		^^ defend only blocks attacks from that direction (from entities within the aoe of the "block attack")
+		^^ defend cant grant armor or barrier cuz those aren't normally direction-based and that
+			would be very confusing. So what does defend do? Is it unique per character? Maybe like a "charge"?
+			Gain some kind of resource for every attack taken from an entity in the area?
+	STICK	- select option
+	A		- confirm option
+	B		- n/a
+	SELECT	- open current character skill menu (not editable while in combat)
+	LT		- while holding, hide option wheel and show popups over all entity HP bars - display buffs/debuffs
+	RT		- n/a

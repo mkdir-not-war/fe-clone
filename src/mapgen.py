@@ -10,7 +10,7 @@ PATH_TO_REGIONDATA = '../data/maps/testregionsdata.json'
 PATH_TO_COLLISIONDATA = '../data/maps/collisiontilemap.dat'
 '''
 
-from src.getmath import v2_add, v2_mult
+from src.mymath import *
 from src.constants import *
 
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
@@ -53,32 +53,41 @@ class RegionName(IntEnum):
 	NJALBRIDGE			= 6
 	BLACKSQ				= 7
 	DOWNSHIRE			= 8
-	NORTHWHARFS			= 9
+	DOWNSHIREKEEP		= 9 ################# boss room
+	NORTHWHARFS			= 10
 	# The Docks
 	EMPRESSSQ			= 10
 	EMPORERSQ			= 11
-	DOCKSMARKET			= 12
-	ROLLINGBARREL		= 13
-	WESTWHARFS			= 14
+	CHAPELOFLURUE		= 12 ################ boss room
+	DOCKSMARKET			= 13
+	ROLLINGBARREL		= 14
+	VIPROOM				= 15 ################ boss room
+	WESTWHARFS			= 16
 	# The Brass
-	FOXHILLSQ			= 15
-	TWINDRAKEHALL		= 16
-	CASTLETONGREN		= 17
+	FOXHILLSQ			= 17
+	TWINDRAKEHALL		= 18
+	GUILDMASTERSOFFICE	= 19 ################ boss room
+	CASTLETONGREN		= 20
+	THRONEROOM			= 21 ################ boss room
 	# Downbull
-	DOWNBULL			= 18
+	DOWNBULL			= 22
+	DOWNBULLKEEP		= 23 ################ boss room
 	# The Stays
-	EASTWHARFS			= 19
-	NAVALYARD			= 20
-	CISTERNSQ			= 21
-	WIGGINSASYLUM		= 22
+	EASTWHARFS			= 24
+	NAVALYARD			= 25
+	OFFICERQUARTERS		= 26 ################ boss room
+	CISTERNSQ			= 27
+	WIGGINSASYLUM		= 28
+	OPERATINGROOM		= 29 ################ boss room
 	# East End
-	GALLOWSSQ			= 23
-	ALLHEROESJAIL		= 24
+	GALLOWSSQ			= 30
+	ALLHEROESJAIL		= 31
+	MAXSECURITY			= 32 ################ boss room
 	# The Market
-	MARKETSQ			= 25
-	TEMPLESQ			= 26
-	PUREWATERTEMPLE		= 27
-	INNERSANCTUM		= 28 ################ << TODO: add this to data
+	MARKETSQ			= 33
+	TEMPLESQ			= 34
+	PUREWATERTEMPLE		= 35
+	INNERSANCTUM		= 36 ################ final boss room!
 	
 '''
 
@@ -98,6 +107,11 @@ EXIT_TILES = {
 	ExitDirection.WEST 		: (0, 						GAMEMAP_TILES_HIGH//2),
 	ExitDirection.BUILDING 	: (GAMEMAP_TILES_WIDE//2, 	GAMEMAP_TILES_HIGH//2-1)
 }
+
+EXIT_TILEBOX = Rect((0, 0), (TILE_WIDTH, TILE_WIDTH))
+def get_exittilebox(exitdirection):
+	result = EXIT_TILEBOX.translate(v2_mult(EXIT_TILES[exitdirection], TILE_WIDTH))
+	return result
 
 class TileLayer(IntEnum):
 	BG 		= 0
@@ -278,21 +292,30 @@ def setup_tilearrays(mapdata):
 		for i in range(GAMEMAP_TILES_WIDE):
 
 			if i==1:
-				if not mapdata.exits[ExitDirection.WEST] or j!=GAMEMAP_TILES_HIGH//2:
+				if mapdata.exits[ExitDirection.WEST] == None or j!=GAMEMAP_TILES_HIGH//2:
 					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 			if i==GAMEMAP_TILES_WIDE-2:
-				if not mapdata.exits[ExitDirection.EAST] or j!=GAMEMAP_TILES_HIGH//2:
+				if mapdata.exits[ExitDirection.EAST] == None or j!=GAMEMAP_TILES_HIGH//2:
 					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 			if j==1:
-				if not mapdata.exits[ExitDirection.NORTH] or i!=GAMEMAP_TILES_WIDE//2:
+				if mapdata.exits[ExitDirection.NORTH] == None or i!=GAMEMAP_TILES_WIDE//2:
 					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
 			if j==GAMEMAP_TILES_HIGH-2:
-				if not mapdata.exits[ExitDirection.SOUTH] or i!=GAMEMAP_TILES_WIDE//2:
+				if mapdata.exits[ExitDirection.SOUTH] == None or i!=GAMEMAP_TILES_WIDE//2:
 					mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
 					continue
+
+			if mapdata.exits[ExitDirection.BUILDING]:
+				if i >= GAMEMAP_TILES_WIDE//2-2 and i <= GAMEMAP_TILES_WIDE//2+2:
+					if j >= GAMEMAP_TILES_HIGH//2-2 and j <= GAMEMAP_TILES_HIGH//2:
+						if i == GAMEMAP_TILES_WIDE//2 and j != GAMEMAP_TILES_HIGH//2-2:
+							continue
+						else:
+							mapdata.blockarray[i+j*GAMEMAP_TILES_WIDE] = MapDataTile.WALL
+							continue
 
 #############################################################################################
 ## GEN TILE ARRAYS FOR EACH REGION ##########################################################
@@ -373,14 +396,17 @@ class MapGenerator:
 		self.allregions = []
 		self.allmaps = []
 
+		# gameplay per map
+		self.map_combatcompleted = []
+		self.map_dialogueevents = []
+
 		# collision data for tilemaps (same for all tilemaps, as long as they follow the template)
 		colfin = open(PATH_TO_COLLISIONDATA, 'r')
 		self.tilemap_coldata = [int(i) for i in colfin.read().split(' ')]
 		colfin.close()
 
 		self.curr_regionmap = RegionMap()
-
-		self.adj_regionmaps = [RegionMap() for i in range(ExitDirection.TOTAL)]
+		self.curr_mapindex = -1
 
 	def get_currmap(self):
 		return self.curr_regionmap
@@ -391,14 +417,18 @@ class MapGenerator:
 
 		mapdata = self.allmaps[mapdata_index]
 		self.curr_regionmap.load_mapdata(mapdata, self.tilemap_coldata)
+		self.curr_mapindex = mapdata_index
 
+		exits2activate = [False] * ExitDirection.TOTAL
 		for i in range(ExitDirection.TOTAL):
 			exit_mapindex = mapdata.exits[i]
 			if exit_mapindex != None:
-				self.adj_regionmaps[i].load_mapdata(self.allmaps[exit_mapindex], self.tilemap_coldata)
+				exits2activate[i] = True
 
-	def load_adjacentregionmap(self, adjacent_map_dir):
-		pass
+		return exits2activate
+
+	def load_adjacentregionmap(self, exitdirection):
+		return self.load_regionmaps_fromindex(self.allmaps[self.curr_mapindex].exits[exitdirection])
 
 	def run(self):
 		# load region data
@@ -454,8 +484,13 @@ class MapGenerator:
 
 		# generate tiles in each map
 		for mapindex in range(len(self.allmaps)):
+			self.map_combatcompleted.append(False)
+			self.map_dialogueevents.append(False)
 			setup_tilearrays(self.allmaps[mapindex])
 			# TODO: generate more detail specific to each region
+
+		self.map_combatcompleted[self.allregions[RegionName.TESTROAD].mapindex] = True
+
 
 
 ##########################################################################################################

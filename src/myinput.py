@@ -1,7 +1,10 @@
-from enum import IntEnum
-from src.getmath import *
-from math import pi, tan, sqrt
 import pygame
+
+from math import pi, tan, sqrt
+from enum import IntEnum
+
+from src.mymath import *
+from src.constants import *
 
 # constants
 JOYSTICK_DEADZONE_EPSILON = 0.30
@@ -9,6 +12,7 @@ DEGREE_WINDOW_DIAGONAL = 25
 HALFRAD_WINDOW_DIAGONAL = deg2rad(DEGREE_WINDOW_DIAGONAL/2)
 DIAG_SMALL_SLOPE = tan(pi / 4 - HALFRAD_WINDOW_DIAGONAL)
 DIAG_LARGE_SLOPE = tan(pi / 4 + HALFRAD_WINDOW_DIAGONAL)
+BUTTONHOLDTIME_TRIGGER = 2.5 # seconds
 
 class InputMoveDir(IntEnum):
 	NONE = 0
@@ -20,6 +24,40 @@ class InputMoveDir(IntEnum):
 	LEFT_DOWN = 6
 	DOWN = 7
 	RIGHT_DOWN = 8
+
+def v2_to_facingdirection(currdirection, v2, onlyleftright=False):
+	result = currdirection
+
+	if v2 != (0, 0):
+		dpx, dpy = v2
+		# discrete thumbstick/keyboard directions
+		if dpx > 0:
+			if onlyleftright:
+				result = InputMoveDir.RIGHT
+			elif dpx**2 > dpy**2:
+				result = InputMoveDir.RIGHT
+			elif dpy < 0:
+				result = InputMoveDir.RIGHT_UP
+			elif dpy > 0:
+				result = InputMoveDir.RIGHT_DOWN
+		elif dpx < 0:
+			if onlyleftright:
+				result = InputMoveDir.LEFT
+			elif dpx**2 > dpy**2:
+				result = InputMoveDir.LEFT
+			elif dpy < 0:
+				result = InputMoveDir.LEFT_UP
+			elif dpy > 0:
+				result = InputMoveDir.LEFT_DOWN
+		else: # no x-direction, default facing right
+			if onlyleftright:
+				result = InputMoveDir.RIGHT
+			elif dpy > 0:
+				result = InputMoveDir.RIGHT_DOWN
+			elif dpy < 0:
+				result = InputMoveDir.RIGHT_UP
+
+	return result
 
 class InputDataIndex(IntEnum):
 	STICK_X = 0
@@ -38,40 +76,26 @@ class BaseInputHandler:
 
 class IH_MovingAround(BaseInputHandler):
 	def handle_input(self, simstate):
-		player_entity = simstate.get_active_player()
+		player_entity = simstate.entities[simstate.activeplayer]
 		inputdata = simstate.inputdata
 
 		# player acceleration directly affected by input
 		movedir = (inputdata.get_var(InputDataIndex.STICK_X), inputdata.get_var(InputDataIndex.STICK_Y))
 		player_entity.input_ddp = movedir
 
-		# swap players with LT
-		if (inputdata.get_var(InputDataIndex.LT) > 0.5 and inputdata.get_var(InputDataIndex.LT, 1) <= 0.5):
+		# swap players with RT
+		if (inputdata.get_var(InputDataIndex.LT) > 0.5 and inputdata.get_var(InputDataIndex.RT, 1) <= 0.5):
 			simstate.swap_active_player()
 
-		'''
-		## move directions ############
-		movedir = inputdata.get_var(InputDataIndex.STICK)
-		if (movedir == InputMoveDir.LEFT):
-			player_entity.set_target((-1, 0))
-		elif (movedir == InputMoveDir.RIGHT):
-			player_entity.set_target((1, 0))
-		elif (movedir == InputMoveDir.UP):
-			player_entity.set_target((0, -1))
-		elif (movedir == InputMoveDir.DOWN):
-			player_entity.set_target((0, 1))
-		# diagonals
-		elif (movedir == InputMoveDir.LEFT_UP):
-			player_entity.set_target((-1, -1))
-		elif (movedir == InputMoveDir.RIGHT_UP):
-			player_entity.set_target((1, -1))
-		elif (movedir == InputMoveDir.LEFT_DOWN):
-			player_entity.set_target((-1, 1))
-		elif (movedir == InputMoveDir.RIGHT_DOWN):
-			player_entity.set_target((1, 1))
-		## end move direction
-		'''
-
+class IH_PreFight(BaseInputHandler):
+	def handle_input(self, simstate):
+		# hold A to start combat
+		if inputdata.get_var(InputDataIndex.A):
+			simstate.buttonholdtimer += PHYSICS_TIME_STEP
+			if simstate.buttonholdtimer > BUTTONHOLDTIME_TRIGGER:
+				simstate.begin_combat()
+		else:
+			simstate.buttonholdtimer = 0.0
 
 MAXINPUTQUEUELEN = 5
 
@@ -86,10 +110,10 @@ class InputDataBuffer:
 			self.vars.append([])
 
 		self.button_mapping = {
-			pygame.K_SPACE : InputDataIndex.A, # counter
-			pygame.K_s : InputDataIndex.B, # switch
-			pygame.K_f : InputDataIndex.RT, # light attack
-			pygame.K_d : InputDataIndex.LT # heavy attack
+			pygame.K_SPACE : InputDataIndex.A,
+			pygame.K_s : InputDataIndex.B,
+			pygame.K_f : InputDataIndex.RT,
+			pygame.K_d : InputDataIndex.LT
 		}
 
 	def newinput(self, joystick):
@@ -139,63 +163,6 @@ class InputDataBuffer:
 		# continuous thumbstick directions
 		self.set_var(InputDataIndex.STICK_X, moveinputvecx)
 		self.set_var(InputDataIndex.STICK_Y, moveinputvecy)
-
-		# TODO(grid): holding the stick feels too quick right now...
-
-		'''
-		# discrete thumbstick/keyboard directions
-		if moveinputvecx > 0:
-			if moveinputvecx**2 > moveinputvecy**2:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.RIGHT)
-			elif moveinputvecy < 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.UP)
-			elif moveinputvecy > 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.DOWN)
-		elif moveinputvecx < 0:
-			if moveinputvecx**2 > moveinputvecy**2:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.LEFT)
-			elif moveinputvecy < 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.UP)
-			elif moveinputvecy > 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.DOWN)
-		else:
-			if moveinputvecy > 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.DOWN)
-			elif moveinputvecy < 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.UP)
-		'''
-
-		'''
-		if moveinputvecx > 0:
-			slope = moveinputvecy/moveinputvecx
-			if (slope <= -DIAG_LARGE_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.DOWN)
-			elif (slope > -DIAG_LARGE_SLOPE and slope < -DIAG_SMALL_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.RIGHT_UP)
-			elif (slope >= -DIAG_SMALL_SLOPE and slope <= DIAG_SMALL_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.RIGHT)
-			elif (slope > DIAG_SMALL_SLOPE and slope < DIAG_LARGE_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.RIGHT_DOWN)
-			elif (slope >= DIAG_LARGE_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.UP)
-		elif moveinputvecx < 0:
-			slope = moveinputvecy/moveinputvecx
-			if (slope <= -DIAG_LARGE_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.UP)
-			elif (slope > -DIAG_LARGE_SLOPE and slope < -DIAG_SMALL_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.LEFT_DOWN)
-			elif (slope >= -DIAG_SMALL_SLOPE and slope <= DIAG_SMALL_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.LEFT)
-			elif (slope > DIAG_SMALL_SLOPE and slope < DIAG_LARGE_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.LEFT_UP)
-			elif (slope >= DIAG_LARGE_SLOPE):
-				self.set_var(InputDataIndex.STICK, InputMoveDir.DOWN)
-		else:
-			if moveinputvecy > 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.DOWN)
-			elif moveinputvecy < 0:
-				self.set_var(InputDataIndex.STICK, InputMoveDir.UP)
-		'''
 
 	def set_var(self, var_idi, val):
 		self.vars[var_idi][self.queuelength-1] = val

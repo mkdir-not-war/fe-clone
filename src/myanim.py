@@ -112,6 +112,7 @@ class Animation:
 			self.curr_frame += 1
 			if (self.curr_frame == self.totalframes): #past last frame, reset to start
 				self.curr_frame = 0
+			elif (self.curr_frame == self.totalframes-1):
 				return True
 		return False
 
@@ -123,10 +124,11 @@ class Animation:
 			if (self.curr_frame == self.totalframes): #past last frame, reverse and backup
 				self.vel = -1
 				self.curr_frame = self.totalframes-2
-				return True
 			if (self.curr_frame < 0): #past first frame, reverse and backup
 				self.vel = 1
 				self.curr_frame = 1
+			if ((self.curr_frame == 0 and self.vel == -1) or 
+				(self.curr_frame == self.totalframes-1 and self.vel == 1)):
 				return True
 		return False
 		

@@ -1,5 +1,5 @@
 from src.constants import TILE_WIDTH, GAMEMAP_TILES_WIDE, GAMEMAP_TILES_HIGH
-from src.getmath import *
+from src.mymath import *
 from math import sqrt, pi, cos, sin
 
 # collision constants
