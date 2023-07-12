@@ -41,6 +41,7 @@ white = pygame.Color('white')
 # fonts
 pygame.font.init()
 font_arial16 = pygame.font.Font('./data/fonts/ARI.ttf', 16)
+font_depixel16 = pygame.font.Font('./data/fonts/DePixelBreit.ttf', 16)
 
 ######## ENUMS #################
 
@@ -277,7 +278,7 @@ def main(argv):
 		currdebugliney = debuglineystart
 		blitlist = []
 		for line in simstate.debugstuff:
-			blitlist.append((font_arial16.render(str(simstate.debugstuff[line]), 0, black), (5, currdebugliney)))
+			blitlist.append((font_depixel16.render(str(simstate.debugstuff[line]), 0, black), (5, currdebugliney)))
 			currdebugliney += 16
 
 		window.blits(blitlist)
