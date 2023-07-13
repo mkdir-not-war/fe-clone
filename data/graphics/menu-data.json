@@ -1,0 +1,29 @@
+{
+	"starting-scene" : "FREEMOVE",
+	"scenes" : {
+		"MAINMENU" : [
+			{
+				"element_type" : "TEXT",
+				"x" : 0,
+				"y" : 0,
+				"poscentered" : false,
+				"text" : "Start",
+				"texturename" : null,
+				"scriptid" : "MM_START",
+				"autorun" : false
+			}
+		],
+		"FREEMOVE" : [
+			{
+				"element_type" : "TEXT",
+				"x" : 386,
+				"y" : 6,
+				"poscentered" : true,
+				"text" : null,
+				"texturename" : null,
+				"scriptid" : "FM_PLACARD",
+				"autorun" : true
+			}
+		]
+	}
+}

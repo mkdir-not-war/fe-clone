@@ -40,6 +40,15 @@ class RegionName(IntEnum):
 	TESTSGATE			= 3
 	TESTTEMPLE			= 4
 
+REGIONNAMESTEXT = {
+	RegionName.TESTROAD		: 'Test Road',
+	RegionName.TESTBOTHER	: 'Testbother',
+	RegionName.TESTHOUSE	: 'Test House',
+	# Test End
+	RegionName.TESTSGATE	: 'Test\'s Gate',
+	RegionName.TESTTEMPLE	: 'Testmaster\'s Office'
+}
+
 '''
 	# Rossbother	
 	PILGRIMROAD			= 0	
@@ -240,7 +249,7 @@ class RegionData:
 		self.mapindex 	= -1
 
 	def load(self, name, data):
-		self.name = name
+		self.name = REGIONNAMESTEXT[RegionName[name]]
 		self.index = int(data['index'])
 		self.zone = data['zone']
 		self.width = w = int(data['width'])
@@ -410,6 +419,9 @@ class MapGenerator:
 
 	def get_currmap(self):
 		return self.curr_regionmap
+
+	def get_regionname(self):
+		return self.allregions[self.allmaps[self.curr_mapindex].regionindex].name
 
 	def load_regionmaps_fromindex(self, mapdata_index=None):
 		if mapdata_index == None:

@@ -14,17 +14,6 @@ DIAG_SMALL_SLOPE = tan(pi / 4 - HALFRAD_WINDOW_DIAGONAL)
 DIAG_LARGE_SLOPE = tan(pi / 4 + HALFRAD_WINDOW_DIAGONAL)
 BUTTONHOLDTIME_TRIGGER = 2.5 # seconds
 
-class InputMoveDir(IntEnum):
-	NONE = 0
-	RIGHT = 1
-	RIGHT_UP = 2
-	UP = 3
-	LEFT_UP = 4
-	LEFT = 5
-	LEFT_DOWN = 6
-	DOWN = 7
-	RIGHT_DOWN = 8
-
 def v2_to_facingdirection(currdirection, v2, onlyleftright=False):
 	result = currdirection
 

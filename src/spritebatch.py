@@ -3,6 +3,7 @@ import json
 
 from src.constants import *
 from src.mymath import *
+from src.mymenu import MenuElementType
 
 class DrawCache:
 	def __init__(self):
@@ -21,7 +22,7 @@ class SpriteBatch:
 		fin.close()
 
 		# load UI elements
-		self.ui_frame_texture = pygame.image.load('./res/ui-frame.png').convert_alpha()
+		self.ui_frame_texture = pygame.image.load('./res/ui/ui-frame.png').convert_alpha()
 		self.ui_frame_texture = pygame.transform.scale_by(self.ui_frame_texture, TILE_ZOOM * 2)
 
 		# load tilemap (TODO: eventually load all tilemaps)
@@ -50,6 +51,19 @@ class SpriteBatch:
 		area = Rect((0, 0), (WIN_WIDTH, WIN_HEIGHT))
 		result.append((image, (0, 0), area.get_pyrect()))
 		
+		return result
+
+	def draw_menuscene(self, menuhandler):
+		result = []
+
+		for menuelement in menuhandler.get_sceneelements():
+			if menuelement.element_type == MenuElementType.TEXT:
+				position = menuelement.get_position()
+				renderedtext = menuelement.renderedtext
+				result.append((renderedtext, position))
+			elif menuelement.element_type == MenuElementType.IMAGE:
+				pass
+
 		return result
 
 	def get_screenpos_from_mappos(map_pos):

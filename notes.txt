@@ -11,6 +11,16 @@
     hard code how many rows are animated, don't display them
     in the tilepicker for static tiles
 
+===== POKEMON ====
+* every pokemon has three visible traits:
+	1) A skill - can be slotted to replace a character skill
+	2) A modifier - can be slotted to replace a character modifier (add effect to a skill)
+	3) A passive - can be slotted to replace a character passive (applies to everything all the time)
+* there is no way to replace the character's class ability (major passive -> modifies skills and passives)
+	* character class ability makes the POSITION of nodes on the skill board matter somehow. 
+		E.g. if I'm not using skill A or B, it should matter which one I replace with my Pokemon skill
+				because their position on the board (and the pokemon skill position) matters to the class ability
+
 ===== CONTROLS =====
 START	- pause menu (instant pause in any context, except in pause menu oviously)
 

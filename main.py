@@ -28,20 +28,7 @@ import src.myanim as myanim
 from src.mapgen import *
 from src.entities import *
 from src.spritebatch import *
-
-# colors
-neutralgrey = pygame.Color(150, 150, 160)
-darkgrey = pygame.Color(50, 50, 65)
-darkred = pygame.Color(80, 0, 0)
-lightred = pygame.Color(250, 100, 100)
-lightblue = pygame.Color(100, 100, 250)
-black = pygame.Color('black')
-white = pygame.Color('white')
-
-# fonts
-pygame.font.init()
-font_arial16 = pygame.font.Font('./data/fonts/ARI.ttf', 16)
-font_depixel16 = pygame.font.Font('./data/fonts/DePixelBreit.ttf', 16)
+from src.mymenu import *
 
 ######## ENUMS #################
 
@@ -154,6 +141,9 @@ def main(argv):
 	mapgen = MapGenerator()
 	mapgen.run()
 
+	menuhandler = MenuHandler()
+	menuhandler.load()
+
 	exits2activate = mapgen.load_regionmaps_fromindex() # default: Region 0 Map 0
 	for i in range(ExitDirection.TOTAL):
 		simstate.entities[simstate.exitindex+i].active = exits2activate[i]
@@ -208,9 +198,12 @@ def main(argv):
 				elif event.type == pygame.JOYBUTTONDOWN:
 					simstate.joystick.button[event.button] = 1
 
-			# TODO: handle input
+			# handle input
 			simstate.inputdata.newinput(simstate.joystick)
 			inputhandlers[simstate.curr_gamecontext].handle_input(simstate)
+
+			# update menu elements (if activated by input)
+			menuhandler.update(simstate, mapgen)
 
 			################################################################################
 			# UPDATE #######################################################################
@@ -237,7 +230,7 @@ def main(argv):
 		################################################################################
 
 		# Start drawing
-		window.fill(neutralgrey) # TODO: change this to off-black??
+		window.fill(COLORS['neutralgrey']) # TODO: change this to off-black??
 
 		## Draw Game Map ##########################
 		# draw background tile layers, cache if helpful
@@ -267,9 +260,8 @@ def main(argv):
 		## Draw UI ################################
 		blitlist = []
 		blitlist.extend(spritebatch.draw_ui_overlay())
+		blitlist.extend(spritebatch.draw_menuscene(menuhandler))
 		window.blits(blitlist)
-
-		# TODO: draw game UI frame
 
 		## End Draw UI ############################
 
@@ -278,7 +270,10 @@ def main(argv):
 		currdebugliney = debuglineystart
 		blitlist = []
 		for line in simstate.debugstuff:
-			blitlist.append((font_depixel16.render(str(simstate.debugstuff[line]), 0, black), (5, currdebugliney)))
+			blitlist.append((
+				font_depixel16.render(str(simstate.debugstuff[line]), 0, COLORS['bone']), 
+				(5, currdebugliney)
+			))
 			currdebugliney += 16
 
 		window.blits(blitlist)

@@ -1,4 +1,5 @@
-# import anything?
+from enum import IntEnum
+from pygame import font, Color
 
 TILE_WIDTH = 32
 GAMEMAP_TILES_WIDE = 19
@@ -17,13 +18,6 @@ TILEMAP_FRAMES_PER_ANIMATION = 16
 # gamemap constants
 GAMEMAP_SCREEN_Y = (WIN_HEIGHT - GAMEMAP_TILES_HIGH * TILE_WIDTH * TILE_ZOOM) // 2
 GAMEMAP_SCREEN_X = WIN_WIDTH - GAMEMAP_TILES_WIDE * TILE_WIDTH * TILE_ZOOM - GAMEMAP_SCREEN_Y
-print(
-	GAMEMAP_SCREEN_X, GAMEMAP_SCREEN_Y, 
-	'->',
-	GAMEMAP_SCREEN_X+(TILE_WIDTH*GAMEMAP_TILES_WIDE), GAMEMAP_SCREEN_Y+(TILE_WIDTH*GAMEMAP_TILES_HIGH)
-)
-# ^^ default Y = (540 - 15 * 32)//2 = 30; X = 960 - 19 * 32 - 30 = 322
-# gamemap X[322 -> 802]; Y[30 -> 510]
 
 # physics constants
 PLAYER_MAXSPEED = 18.0 * TILE_WIDTH
@@ -38,3 +32,33 @@ PLAYER_FOLLOWINGEPSILON	 = TILE_WIDTH * 0.15
 # misc constants
 FRAMERATE_LOCK = 144
 PHYSICS_TIME_STEP = 1.0/100
+
+# colors
+COLORS = {
+	'neutralgrey' 	: Color(150, 150, 160),
+	'darkgrey' 		: Color(50, 50, 65),
+	'darkred' 		: Color(80, 0, 0),
+	'lightred' 		: Color(250, 100, 100),
+	'lightblue' 	: Color(100, 100, 250),
+	'bone' 			: Color(227, 218, 201),
+	'black' 		: Color('black'),
+	'white' 		: Color('white')
+}
+
+
+# fonts
+font.init()
+font_arial16 = font.Font('./data/fonts/ARI.ttf', 16)
+font_depixel16 = font.Font('./data/fonts/DePixelBreit.ttf', 16)
+
+# enums
+class InputMoveDir(IntEnum):
+	NONE = 0
+	RIGHT = 1
+	RIGHT_UP = 2
+	UP = 3
+	LEFT_UP = 4
+	LEFT = 5
+	LEFT_DOWN = 6
+	DOWN = 7
+	RIGHT_DOWN = 8
