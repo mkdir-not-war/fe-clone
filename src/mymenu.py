@@ -20,7 +20,7 @@ class MenuElement:
 		self.element_type = None
 		self.x = 0
 		self.y = 0
-		self.poscentered = False
+		self.newlinepx = 0
 		self.scriptid = None
 		self.autorun = False
 
@@ -40,9 +40,10 @@ class MenuElement:
 
 	def get_position(self):
 		position = (self.x, self.y)
-		if self.poscentered:
-			position = (position[0]-(self.textwidth//2 * 16), position[1])
-		return position
+		result = []
+		for i in range(len(self.renderedtext)):
+			result.append((position[0], position[1] + i * self.newlinepx))
+		return result
 
 	def activate(self):
 		self.runscript = True
@@ -102,9 +103,9 @@ class MenuHandler:
 			for elementdata in data['scenes'][scenename]:
 				self.allelements.append(MenuElement(numelements))
 				self.allelements[numelements].element_type 	= MenuElementType[elementdata['element_type']]
-				self.allelements[numelements].x 			= elementdata['x']
-				self.allelements[numelements].y 			= elementdata['y']
-				self.allelements[numelements].poscentered	= elementdata['poscentered']
+				self.allelements[numelements].x 			= int(elementdata['x'])
+				self.allelements[numelements].y 			= int(elementdata['y'])
+				self.allelements[numelements].newlinepx		= int(elementdata['newlinepx'])
 				self.allelements[numelements].renderedtext	= render_text(elementdata['text'], COLORS['bone'])
 				self.allelements[numelements].textwidth		= get_textwidth(elementdata['text'])
 				self.allelements[numelements].texturename 	= elementdata['texturename']
@@ -115,7 +116,13 @@ class MenuHandler:
 			self.allscenes[MenuSceneIndex[scenename]] = MenuScene(startelementindex, elementsinscene)
 
 def render_text(text, color):
-	return font_depixel16.render(text, 0, color)
+	if text == None:
+		return []
+	result = []
+	for line in text.split('\n'):
+		result.append(font_depixel16.render(line, 0, color))
+
+	return result
 
 def get_textwidth(text):
 	if text == None:

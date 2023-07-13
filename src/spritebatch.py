@@ -58,9 +58,10 @@ class SpriteBatch:
 
 		for menuelement in menuhandler.get_sceneelements():
 			if menuelement.element_type == MenuElementType.TEXT:
-				position = menuelement.get_position()
-				renderedtext = menuelement.renderedtext
-				result.append((renderedtext, position))
+				positions = menuelement.get_position()
+				renderedtexts = menuelement.renderedtext
+				for i in range(len(positions)):
+					result.append((renderedtexts[i], positions[i]))
 			elif menuelement.element_type == MenuElementType.IMAGE:
 				pass
 

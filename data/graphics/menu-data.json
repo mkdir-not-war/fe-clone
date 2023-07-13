@@ -6,7 +6,7 @@
 				"element_type" : "TEXT",
 				"x" : 0,
 				"y" : 0,
-				"poscentered" : false,
+				"newlinepx" : 0,
 				"text" : "Start",
 				"texturename" : null,
 				"scriptid" : "MM_START",
@@ -16,9 +16,9 @@
 		"FREEMOVE" : [
 			{
 				"element_type" : "TEXT",
-				"x" : 386,
+				"x" : 305,
 				"y" : 6,
-				"poscentered" : true,
+				"newlinepx" : 23,
 				"text" : null,
 				"texturename" : null,
 				"scriptid" : "FM_PLACARD",
