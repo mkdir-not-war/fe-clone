@@ -12,39 +12,55 @@ DEGREE_WINDOW_DIAGONAL = 25
 HALFRAD_WINDOW_DIAGONAL = deg2rad(DEGREE_WINDOW_DIAGONAL/2)
 DIAG_SMALL_SLOPE = tan(pi / 4 - HALFRAD_WINDOW_DIAGONAL)
 DIAG_LARGE_SLOPE = tan(pi / 4 + HALFRAD_WINDOW_DIAGONAL)
+TAN60_RATIOSQ = 9.0/16.0
 BUTTONHOLDTIME_TRIGGER = 2.5 # seconds
 
-def v2_to_facingdirection(currdirection, v2, onlyleftright=False):
+def v2_to_leftright(currdirection, v2):
 	result = currdirection
 
 	if v2 != (0, 0):
 		dpx, dpy = v2
 		# discrete thumbstick/keyboard directions
+		if dpx < 0:
+			result = InputMoveDir.LEFT
+		else: # x is positive or no x-direction, default facing right
+			result = InputMoveDir.RIGHT
+
+	return result
+
+def v2_to_hex(currdirection, v2):
+	result = currdirection
+
+	if v2 != (0, 0):
+		dpx, dpy = v2
+
 		if dpx > 0:
-			if onlyleftright:
-				result = InputMoveDir.RIGHT
-			elif dpx**2 > dpy**2:
-				result = InputMoveDir.RIGHT
-			elif dpy < 0:
-				result = InputMoveDir.RIGHT_UP
-			elif dpy > 0:
-				result = InputMoveDir.RIGHT_DOWN
+			if dpy < 0:
+				if dpx**2 > TAN60_RATIOSQ * dpy**2:
+					result = InputMoveDir.RIGHT_UP
+				else:
+					result = InputMoveDir.UP
+			else:
+				if dpx**2 > TAN60_RATIOSQ * dpy**2:
+					result = InputMoveDir.RIGHT_DOWN
+				else:
+					result = InputMoveDir.DOWN
 		elif dpx < 0:
-			if onlyleftright:
-				result = InputMoveDir.LEFT
-			elif dpx**2 > dpy**2:
-				result = InputMoveDir.LEFT
-			elif dpy < 0:
-				result = InputMoveDir.LEFT_UP
-			elif dpy > 0:
-				result = InputMoveDir.LEFT_DOWN
-		else: # no x-direction, default facing right
-			if onlyleftright:
-				result = InputMoveDir.RIGHT
-			elif dpy > 0:
-				result = InputMoveDir.RIGHT_DOWN
-			elif dpy < 0:
-				result = InputMoveDir.RIGHT_UP
+			if dpy < 0:
+				if dpx**2 > TAN60_RATIOSQ * dpy**2:
+					result = InputMoveDir.LEFT_UP
+				else:
+					result = InputMoveDir.UP
+			else:
+				if dpx**2 > TAN60_RATIOSQ * dpy**2:
+					result = InputMoveDir.LEFT_DOWN
+				else:
+					result = InputMoveDir.DOWN
+		else:
+			if dpy > 0:
+				result = InputMoveDir.DOWN
+			else:
+				result = InputMoveDir.UP
 
 	return result
 

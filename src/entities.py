@@ -94,6 +94,36 @@ class PlayerAnimState(IntEnum):
 	IDLE = 0
 	WALK = 1
 
+class CombatActionIndex(IntEnum):
+	DEFEND 	= 0
+	SKILL1 	= 1
+	SKILL2 	= 2
+	SKILL3 	= 3
+	SKILL4 	= 4
+	SKILL5 	= 5
+
+	TOTAL 	= 6
+
+class CombatEntity:
+	def __init__(self):
+		self.max_hp = 0
+		self.curr_hp = 0
+		self.speed = 0
+
+		self.actionids = [None] * CombatActionIndex.TOTAL
+		self.actionmodids = [None] * CombatActionIndex.TOTAL
+
+class PlayerCharacterIndex(IntEnum):
+	# all characters are members of the secret cabal of exorcists
+	SLOANE	= 0		# bearded, stoic, former general turned assassin
+	EIRWEN	= 1		# tanned, boisterous, competent
+	BLAYNO 	= 2		# boisterous, pale, snake eyed soldier
+
+class PlayerCharacter:
+	def __init__(self):
+		self.nametext = ''
+		self.characterindex = -1
+
 # NOTE: player does not have player-specific variables -- everything goes in entity
 # player is really just an Init function and an Update function. That's it.
 # Still useful to inherit Entity because we can use the Update function polymorphed
@@ -144,9 +174,9 @@ class Entity_Player(Entity):
 
 		# change facing direction based on movement (or face the player if following)
 		if followingdist2 == None:
-			self.facing_direction = v2_to_facingdirection(self.facing_direction, self.input_ddp, True)
+			self.facing_direction = v2_to_leftright(self.facing_direction, self.input_ddp)
 		else:
-			self.facing_direction = v2_to_facingdirection(self.facing_direction, vec2player, True)
+			self.facing_direction = v2_to_leftright(self.facing_direction, vec2player)
 
 		# change animation
 		if self.input_ddp == (0, 0):

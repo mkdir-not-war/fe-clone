@@ -53,50 +53,51 @@ REGIONNAMESTEXT = {
 	# Rossbother	
 	PILGRIMROAD			= 0	
 	ROSSBOTHER 			= 1
+	HIGHTAILHALL		= 2 ################## tutorial "boss" room (key to pilgrims gate)
 	# West End
-	PILGRIMSGATE 		= 2
-	OLDWESTBRIDGE 		= 3
-	WESTMARKETSQ		= 4
+	PILGRIMSGATE 		= 3
+	OLDWESTBRIDGE 		= 4
+	WESTMARKETSQ		= 5
 	# The Mud
-	SAINTSTREET			= 5
-	NJALBRIDGE			= 6
-	BLACKSQ				= 7
-	DOWNSHIRE			= 8
-	DOWNSHIREKEEP		= 9 ################# boss room
-	NORTHWHARFS			= 10
+	SAINTSTREET			= 6
+	NJALBRIDGE			= 7
+	BLACKSQ				= 8
+	DOWNSHIRE			= 9
+	DOWNSHIREKEEP		= 10 ################# boss room (unlock character)
+	NORTHWHARFS			= 11
 	# The Docks
-	EMPRESSSQ			= 10
-	EMPORERSQ			= 11
-	CHAPELOFLURUE		= 12 ################ boss room
-	DOCKSMARKET			= 13
-	ROLLINGBARREL		= 14
-	VIPROOM				= 15 ################ boss room
-	WESTWHARFS			= 16
+	EMPRESSSQ			= 11
+	EMPORERSQ			= 12
+	CHAPELOFLURUE		= 13 ################ boss room (unlock character)
+	DOCKSMARKET			= 14
+	ROLLINGBARREL		= 15
+	VIPROOM				= 16 ################ boss room (unlock character)
+	WESTWHARFS			= 17
 	# The Brass
-	FOXHILLSQ			= 17
+	FOXHILLSQ			= 18
 	TWINDRAKEHALL		= 18
-	GUILDMASTERSOFFICE	= 19 ################ boss room
-	CASTLETONGREN		= 20
-	THRONEROOM			= 21 ################ boss room
+	GUILDMASTERSOFFICE	= 20 ################ boss room (unlock character)
+	CASTLETONGREN		= 21
+	THRONEROOM			= 22 ################ boss room (key to castle tongren)
 	# Downbull
-	DOWNBULL			= 22
-	DOWNBULLKEEP		= 23 ################ boss room
+	DOWNBULL			= 23
+	DOWNBULLKEEP		= 24 ################ boss room (key to castle tongren)
 	# The Stays
-	EASTWHARFS			= 24
-	NAVALYARD			= 25
-	OFFICERQUARTERS		= 26 ################ boss room
-	CISTERNSQ			= 27
-	WIGGINSASYLUM		= 28
-	OPERATINGROOM		= 29 ################ boss room
+	EASTWHARFS			= 25
+	NAVALYARD			= 26
+	OFFICERQUARTERS		= 27 ################ boss room (unlock character)
+	CISTERNSQ			= 28
+	WIGGINSASYLUM		= 29
+	OPERATINGROOM		= 30 ################ boss room (explosion scroll for castle tongren)
 	# East End
-	GALLOWSSQ			= 30
-	ALLHEROESJAIL		= 31
-	MAXSECURITY			= 32 ################ boss room
+	GALLOWSSQ			= 31
+	ALLHEROESJAIL		= 32
+	MAXSECURITY			= 33 ################ boss room (thief's tools for castle tongren)
 	# The Market
-	MARKETSQ			= 33
-	TEMPLESQ			= 34
-	PUREWATERTEMPLE		= 35
-	INNERSANCTUM		= 36 ################ final boss room!
+	MARKETSQ			= 34
+	TEMPLESQ			= 35
+	PUREWATERTEMPLE		= 36
+	INNERSANCTUM		= 37 ################ final boss room!
 	
 '''
 

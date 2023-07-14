@@ -11,48 +11,120 @@
     hard code how many rows are animated, don't display them
     in the tilepicker for static tiles
 
-===== POKEMON ====
+========================================
+== QUESTIONS ===========================
+========================================
+1) should we EQUIP skills? Or do you have all skills available once unlocked, and no extras?
+	- obviously it's fun and a goal to play the game again with the same character but different build
+	  but should the build diversity come from the skill tree? Or can we lean into the pokemon?
+2) should ACTIVATING or BREAKING shields take more turns? Which is harder to do/more situational?
+
+===== SHIELDS & COMBAT CONDITIONS =====
+* you can't damage enemies who have either a BARRIER or ARMOR until you break it.
+* different enemy types gain BARRIER or ARMOR in different ways
+	> e.g. fish shaman casts line spell and if it hits a player, the shaman and any adjacent units gain barrier
+
+* SHIELDS:
+	> ARMOR
+		* breaks after two hits, allowing 3rd+ hits to damage the target. At the end of the turn, it reforms
+		* when a target is CORNERED, its armor is broken and cannot reform
+			> e.g. knock target into a corner, instantly CORNERED and armor breaks. If the target doesn't move
+				out of the corner, their armor does not reform. If the target moves out of the corner, 
+				they aren't CORNERED anymore (how to display the end of the condition?) and their armor reforms.
+	> BARRIER
+		* breaks when an entity is knocked into the target. At the end of the turn, it reforms
+		* when a target is BURNING, its armor is broken and cannot reform
+
+* CONDITIONS:
+	> CORNERED
+		* trigger: the target is adjacent to 2+ tiles that are impassable
+	> BURNING
+		* trigger: knock the target into a impassable tile with fire (1 turn), or proc'd with an attack effect
+	> LIGHTWEIGHT
+		* trigger: proc'd with attack effects only
+		* effect: knocking the target back sends them max possible distance
+
+===== ENEMY TYPES =====
+[not actual data, just a guide to design]
+1) Skirmisher - low health, short range melee attack, one simple mechanic (e.g. can move extra tile after hit)
+2) Sniper/Mage - low health, extremely long straight line range - coaxes the player closer
+3) Bruiser - high health, wide range melee attack, slower movement
+4) Enchanter - medium health, gives allies shields or healing after recognizable setup (can interrupt!)
+5) Ambusher - medium health, high movement (obvious ways to stop them?), short range melee attack
+* different enemy factions have 1+ type fitting into each archetype 
+	e.g. fish have 2 different enchanters, cait sith have 2 different ambushers
+
+===== POKEMON & SKILLS =====
+* every character has 
 * every pokemon has three visible traits:
 	1) A skill - can be slotted to replace a character skill
 	2) A modifier - can be slotted to replace a character modifier (add effect to a skill)
 	3) A passive - can be slotted to replace a character passive (applies to everything all the time)
-* there is no way to replace the character's class ability (major passive -> modifies skills and passives)
-	* character class ability makes the POSITION of nodes on the skill board matter somehow. 
-		E.g. if I'm not using skill A or B, it should matter which one I replace with my Pokemon skill
-				because their position on the board (and the pokemon skill position) matters to the class ability
+* there is no way to replace the character's keystone (major passive -> modifies skills and passives)
+	* character keystone makes the POSITION of nodes on the skill board matter somehow. 
+		E.g skills A and B are sword skills, skills C and D are axe skills. Even when spirit skill is slotted in,
+			it's still sword/axe skills. Keystone boosts axe skills after sword skills and vice versa.
+
+pokemon and skill tree overview:
+	* In each combat, one enemy has an active skill granted by a randomly rolled spirit. 
+		At the end of the combat, you can Exorcise or Capture the spirit.
+	* keystone and skill#1 unlocked at level 1
+	* unlock skills #2-5 by exorcising a spirit after combat
+	* level a skill by Exorcising a spirit after combat
+	* At level 2, can choose between 2 paths on the skill. Can swap path for free.
+	* At level 2, skill gains a modifier, one per path
+	* At level 3, skill gains a passive, one per path
+	* When you Capture a spirit, you can slot it into any Skill, Modifier (on a single path) or Passive (")
+		^^^ => 14 levels to max on each character -> 28 total.
+
+===== REGIONS =====
+* (rossbother), west end, the brass, the docks, the mud, the market, east end, the stays, downbull = 8 regions
+* one enemy faction per area, ~6 enemy types per faction = 48 enemies (not including bosses)
+* ~4 unique spirits per region, ~3 share spirits between regions = ~35 spirits = 35 skills!
 
 ===== CONTROLS =====
 START	- pause menu (instant pause in any context, except in pause menu oviously)
 
 ** In Free Move **
 	STICK 	- move
-	A		- n/a
-	B		- n/a
+	A			- n/a
+	B			- n/a
 	SELECT	- open current character skill menu
-	LT		- open dropdown with zone & region name & current goal
-	RT		- swap character
+	LT			- open dropdown with zone & region name & current goal
+	RT			- swap character
+
+** In Menu **
+	STICK 	- move
+	A			- confirm
+	B			- back/cancel
+	SELECT	- n/a
+	LT			- n/a
+	RT			- swap character in skill menu / end combat screen
 
 ** In Combat Enemy Turn **
 	n/a
 
 ** In Combat Player Turn **
 	STICK 	- move
-	A		- hold briefly to confirm attack
-	B		- go back to attack choice wheel
+	A			- hold briefly to confirm attack
+	B			- go back to attack choice wheel
 	SELECT	- open current character skill menu (not editable while in combat)
-	LT		- while holding, show popups over all entity HP bars - display buffs/debuffs
-	RT		- rotate attack direction 90 degrees
+	LT			- while holding, show popups over all entity HP bars - display buffs/debuffs
+	RT			- rotate attack direction 90 degrees
 
 ** In Combat Attack Wheel **
-	[OPTIONS: slot1, slot2, slot3, spiritslot1, spiritslot2, defend]
+	[OPTIONS: skill1, skill2, skill3, skill4, skill5, defend]
 		^^ defend acts as both "move" and "pass", but allows directional blocking
-		^^ defend only blocks attacks from that direction (from entities within the aoe of the "block attack")
-		^^ defend cant grant armor or barrier cuz those aren't normally direction-based and that
-			would be very confusing. So what does defend do? Is it unique per character? Maybe like a "charge"?
-			Gain some kind of resource for every attack taken from an entity in the area?
-	STICK	- select option
-	A		- confirm option
-	B		- n/a
+		^^ defend grants you Focus for every attack targeting your position from an entity in the area.
+	STICK		- select option
+	A			- confirm option
+	B			- n/a
 	SELECT	- open current character skill menu (not editable while in combat)
-	LT		- while holding, hide option wheel and show popups over all entity HP bars - display buffs/debuffs
-	RT		- n/a
+	LT			- while holding, hide option wheel and show popups over all entity HP bars - display buffs/debuffs
+	RT			- n/a
+
+					(skill1)
+	(skill2)						(skill3)
+						x
+	(skill4)						(skill5)
+					(defend)
