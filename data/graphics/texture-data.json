@@ -4,7 +4,11 @@
 		"frame-width" : 32
 	},
 	"entities64" : {
-		"filepath" : "./res/entities64.png",
+		"filepath" : "./res/animations64.png",
 		"frame-width" : 64
+	},
+	"textures32" : {
+		"filepath" : "./res/textures32.png",
+		"frame-width" : 32
 	}
 }

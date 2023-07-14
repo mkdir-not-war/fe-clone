@@ -40,9 +40,6 @@
 		* trigger: the target is adjacent to 2+ tiles that are impassable
 	> BURNING
 		* trigger: knock the target into a impassable tile with fire (1 turn), or proc'd with an attack effect
-	> LIGHTWEIGHT
-		* trigger: proc'd with attack effects only
-		* effect: knocking the target back sends them max possible distance
 
 ===== ENEMY TYPES =====
 [not actual data, just a guide to design]
