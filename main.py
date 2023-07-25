@@ -35,10 +35,9 @@ from src.mymenu import *
 class GameContext(IntEnum):
 	IN_MENU			= 0
 	FREE_MOVE		= 1
-	COMBAT_PREFIGHT	= 2
-	COMBAT_CHOOSE	= 3
-	COMBAT_PLAYER	= 4
-	COMBAT_ENEMY	= 5
+	COMBAT_CHOOSE	= 2
+	COMBAT_PLAYER	= 3
+	COMBAT_ENEMY	= 4
 
 ######## END ENUMS #############
 
@@ -46,7 +45,7 @@ def check_exit_events(mapgen, simstate):
 	playercolrect = simstate.entities[simstate.activeplayer].get_collrect()
 	exitingdir = None
 	for i in range(ExitDirection.TOTAL):
-		if simstate.entities[simstate.exitindex+i].active:
+		if simstate.entities[simstate.exits_startindex+i].active:
 			tilebox = get_exittilebox(i)
 			if playercolrect.collides_rect(tilebox):
 				exitingdir = i
@@ -59,15 +58,15 @@ def check_exit_events(mapgen, simstate):
 		allnewexits = mapgen.allmaps[mapgen.curr_mapindex].exits
 		entrancedir = None
 		for i in range(ExitDirection.TOTAL):
-			simstate.entities[simstate.exitindex+i].active = exits2activate[i]
+			simstate.entities[simstate.exits_startindex+i].active = exits2activate[i]
 			if allnewexits[i] == oldmapindex:
 				entrancedir = i
 
 		if mapgen.map_combatcompleted[mapgen.curr_mapindex]:
 			spawn_players(simstate, mapgen, entrancedir)
 		else:
-			# entering a map with combat, switch context to pre-fight
-			simstate.curr_gamecontext = GameContext.COMBAT_PREFIGHT
+			# entering a map with combat, switch context to combat!
+			simstate.begin_combat()
 
 def spawn_players(simstate, mapgen, entrancedir):
 	spawntiles = mapgen.get_currmap().get_spawntiles(entrancedir)
@@ -97,10 +96,16 @@ class SimulationState:
 		self.activeplayer = 0
 		self.followingplayer = 1
 
-		# five exits, at indices 2, 3, 4, 5, 6
-		self.exitindex = 2
+		# five exits, at entity-indices 2, 3, 4, 5, 6
+		self.exits_startindex = 2
 		for i in range(ExitDirection.TOTAL):
 			self.entities.append(Entity_MapExit(i))
+
+		self.mostrecent_entrance = ExitDirection.SOUTH
+
+		# combat stuff
+		self.combathandler = CombatHandler()
+		self.combathandler.setup()
 
 	def animate(self):
 		for entity in self.entities:
@@ -112,8 +117,103 @@ class SimulationState:
 		self.followingplayer = self.followingplayer * -1 + 1
 
 	def begin_combat(self):
-		simstate.curr_gamecontext = GameContext.COMBAT_CHOOSE
+		#simstate.curr_gamecontext = GameContext.COMBAT_CHOOSE
+		simstate.curr_gamecontext = GameContext.COMBAT_PLAYER
+
 		# TODO: probably start combat music, maybe check for dialogue events, etc.
+
+	def combat_choose_action(self, selectiondir):
+		if (selectiondir == InputMoveDir.DOWN):
+			self.combathandler.selectedactionindex = CombatActionIndex.DEFEND
+		elif (selectiondir == InputMoveDir.UP):
+			pass
+		elif (selectiondir == InputMoveDir.RIGHT_DOWN):
+			pass
+		elif (selectiondir == InputMoveDir.LEFT_DOWN):
+			pass
+		elif (selectiondir == InputMoveDir.RIGHT_UP):
+			pass
+		elif (selectiondir == InputMoveDir.LEFT_UP):
+			pass
+
+###################################### Combat stuff #################
+
+class CombatTileFlag(IntEnum):
+	WALKABLE 		= 0
+	BLOCKED 		= 1
+	BLOCKED_BURNING	= 2
+	ENTITY 			= 3
+
+class CombatTile:
+	def __init__(self):
+		self.flag = CombatTileFlag.WALKABLE
+		self.index = -1 # index into combathandler.combatentities if tile has entity
+
+class CombatHandler:
+	def __init__(self):
+		self.combattiles = []
+		self.combatentities = []
+
+		# player turn vars
+		self.selectedactionindex = -1
+		self.entity_actionindicator = None # just using x, y and facingdirection
+		self.indicator_startpos = (0, 0)
+		self.overlappingplayer = True
+
+		# enemy turn vars
+		# self.enemies_megabrain = None ## I think we skip a Brain class and just do the AI in CombatHandler
+
+	def get_tile(self, x, y):
+		return self.combattiles[x + y * GAMEMAP_TILES_WIDE]
+
+	def reset_indicator(self, player_entityindex):
+		# default attack direciton opposite entrance direction
+		self.entity_actionindicator.facingdirection = get_oppdirection(self.mostrecent_entrance)
+
+		# default attack tile position to player character tile position
+		self.indicator_startpos = self.combatentities[player_entityindex].get_pos()
+		self.entity_actionindicator.spawn(*self.indicator_startpos)
+
+	def move_indicator(self, movedir):
+		newpos = v2_add(movedir, self.entity_actionindicator.get_pos())
+		testtile = self.get_tile(*newpos)
+		# can attack/move from any walkable tile or from original tile (i.e. don't move)
+		if testtile.flag == CombatTileFlag.WALKABLE or newpos == self.indicator_startpos:
+			self.entity_actionindicator.move(movedir)
+
+	def turn_indicator(self):
+		indicatordir = self.entity_actionindicator.facingdirection
+
+	def setup(self):
+		for i in range(GAMEMAP_SIZE):
+			self.combattiles.append(CombatTile())
+
+		for i in range(2 + MAX_COMBAT_ENEMIES):
+			self.combatentities.append(CombatEntity())
+
+		self.indicator_pos = Entity()
+
+	def reset(self, simstate, mapgen):
+		regionmap = mapgen.get_currmap()
+
+		# first, reset combat tiles to collisionmap
+		for i in range(GAMEMAP_SIZE):
+			self.combattiles[i].index = -1
+			if regionmap.collisionmap[i] > 0:
+				if regionmap.burningmap[i] > 0:
+					self.commbattiles[i].flag = CombatTileFlag.BLOCKED_BURNING
+				else:
+					self.commbattiles[i].flag = CombatTileFlag.BLOCKED
+			else:
+				self.commbattiles[i].flag = CombatTileFlag.WALKABLE
+
+		# setup and place player characters
+		self.combatentities[0].entityindex = simstate.activeplayer
+		self.combatentities[1].entityindex = simstate.followingplayer
+
+		spawntiles = regionmap.get_spawntiles(entrancedir)
+
+############ End Combat stuff #########################################
 
 def main(argv):
 	pygame.init()
@@ -132,7 +232,8 @@ def main(argv):
 	spritebatch = SpriteBatch()
 
 	# input handlers
-	inputhandlers = [None, IH_MovingAround(), None, None, None]
+	# Menu, MoveAround, CombatChoose, CombatPlayer, CombatEnemy
+	inputhandlers = [None, IH_MovingAround(), IH_CombatChoose(), IH_CombatPlayer(), None]
 
 	# editor state
 	simstate = SimulationState()
@@ -146,8 +247,8 @@ def main(argv):
 
 	exits2activate = mapgen.load_regionmaps_fromindex() # default: Region 0 Map 0
 	for i in range(ExitDirection.TOTAL):
-		simstate.entities[simstate.exitindex+i].active = exits2activate[i]
-		simstate.entities[simstate.exitindex+i].spawn(*get_tilepos_center(EXIT_TILES[i]))
+		simstate.entities[simstate.exits_startindex+i].active = exits2activate[i]
+		simstate.entities[simstate.exits_startindex+i].spawn(*get_tilepos_center(EXIT_TILES[i]))
 
 	# set player spawn (default south entrance)
 	spawn_players(simstate, mapgen, ExitDirection.SOUTH)

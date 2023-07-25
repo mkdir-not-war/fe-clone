@@ -4,6 +4,7 @@ from pygame import font, Color
 TILE_WIDTH = 32
 GAMEMAP_TILES_WIDE = 19
 GAMEMAP_TILES_HIGH = 15
+GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
 
 # window constants (16:9)
 TILE_ZOOM = 1 # eventually go 2 here
@@ -33,6 +34,8 @@ PLAYER_FOLLOWINGEPSILON	 = TILE_WIDTH * 0.15
 FRAMERATE_LOCK = 144
 PHYSICS_TIME_STEP = 1.0/100
 
+MAX_COMBAT_ENEMIES = 14
+
 # colors
 COLORS = {
 	'neutralgrey' 	: Color(150, 150, 160),
@@ -53,12 +56,17 @@ font_depixel16 = font.Font('./data/fonts/DePixelBreit.ttf', 16)
 
 # enums
 class InputMoveDir(IntEnum):
-	NONE = 0
-	RIGHT = 1
-	RIGHT_UP = 2
-	UP = 3
-	LEFT_UP = 4
-	LEFT = 5
-	LEFT_DOWN = 6
-	DOWN = 7
-	RIGHT_DOWN = 8
+	RIGHT 		= 0
+	RIGHT_UP 	= 1
+	UP 			= 2
+	LEFT_UP 	= 3
+	LEFT 		= 4
+	LEFT_DOWN 	= 5
+	DOWN 		= 6
+	RIGHT_DOWN 	= 7
+
+	NONE 		= 8
+
+def get_oppdirection(direction):
+	result = (direction.value + 8) % 8
+	return result

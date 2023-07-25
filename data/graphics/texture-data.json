@@ -10,5 +10,19 @@
 	"textures32" : {
 		"filepath" : "./res/textures32.png",
 		"frame-width" : 32
+	},
+	"menu-textures" : {
+		"indicator-north" : {
+			
+		},
+		"indicator-west" : {
+
+		},
+		"indicator-east" : {
+
+		},
+		"indicator-south" : {
+
+		}
 	}
 }

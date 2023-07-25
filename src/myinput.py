@@ -14,8 +14,9 @@ DIAG_SMALL_SLOPE = tan(pi / 4 - HALFRAD_WINDOW_DIAGONAL)
 DIAG_LARGE_SLOPE = tan(pi / 4 + HALFRAD_WINDOW_DIAGONAL)
 TAN60_RATIOSQ = 9.0/16.0
 BUTTONHOLDTIME_TRIGGER = 2.5 # seconds
+MAXINPUTQUEUELEN = 5
 
-def v2_to_leftright(currdirection, v2):
+def v2_to_leftright(v2, currdirection=(0,0)):
 	result = currdirection
 
 	if v2 != (0, 0):
@@ -28,7 +29,32 @@ def v2_to_leftright(currdirection, v2):
 
 	return result
 
-def v2_to_hex(currdirection, v2):
+def v2_to_cardinal(v2, currdirection=(0,0)):
+	result = currdirection
+
+	if v2 != (0, 0):
+		dpx, dpy = v2
+		# discrete thumbstick/keyboard directions
+		if dpx < 0:
+			if dpy**2 > dpx**2:
+				if dpy > 0:
+					result = InputMoveDir.DOWN
+				else:
+					result = InputMoveDir.UP
+			else:
+				result = InputMoveDir.LEFT
+		else: # x is positive or no x-direction, default facing right
+			if dpy**2 > dpx**2:
+				if dpy > 0:
+					result = InputMoveDir.DOWN
+				else:
+					result = InputMoveDir.UP
+			else:
+				result = InputMoveDir.RIGHT
+
+	return result
+
+def v2_to_hex(v2, currdirection=(0,0)):
 	result = currdirection
 
 	if v2 != (0, 0):
@@ -92,8 +118,9 @@ class IH_MovingAround(BaseInputHandler):
 		if (inputdata.get_var(InputDataIndex.LT) > 0.5 and inputdata.get_var(InputDataIndex.RT, 1) <= 0.5):
 			simstate.swap_active_player()
 
-class IH_PreFight(BaseInputHandler):
+class IH_CombatChoose(BaseInputHandler):
 	def handle_input(self, simstate):
+		'''
 		# hold A to start combat
 		if inputdata.get_var(InputDataIndex.A):
 			simstate.buttonholdtimer += PHYSICS_TIME_STEP
@@ -101,8 +128,26 @@ class IH_PreFight(BaseInputHandler):
 				simstate.begin_combat()
 		else:
 			simstate.buttonholdtimer = 0.0
+		'''
+		movedir = (inputdata.get_var(InputDataIndex.STICK_X), inputdata.get_var(InputDataIndex.STICK_Y))
+		movedir = v2_to_hex(movedir)
 
-MAXINPUTQUEUELEN = 5
+class IH_CombatPlayer(BaseInputHandler):
+	def handle_input(self, simstate):
+
+		movedir = (inputdata.get_var(InputDataIndex.STICK_X), inputdata.get_var(InputDataIndex.STICK_Y))
+		movedir = v2_to_cardinal(movedir)
+
+		simstate.combathandler.move_indicator(movedir)
+
+		if (inputdata.get_var(InputDataIndex.RT) > 0.5 and inputdata.get_var(InputDataIndex.RT, 1) <= 0.5):
+			simstate.combathandler.turn_indicator()
+
+		##### TEST ######
+		if (inputdata.get_var(InputDataIndex.LT) > 0.5 and inputdata.get_var(InputDataIndex.RT, 1) <= 0.5):
+			simstate.swap_active_player()
+			simstate.combathandler.reset_indicator()
+		#### END TEST ######
 
 class InputDataBuffer:
 	def __init__(self):

@@ -106,18 +106,34 @@ class CombatActionIndex(IntEnum):
 
 class CombatEntity:
 	def __init__(self):
+		self.entityindex = -1
+		self.x = 0
+		self.y = 0
+
+		# basic stats
 		self.max_hp = 0
 		self.curr_hp = 0
 		self.speed = 0
 
+		# actions & action accessories
 		self.actionids = [None] * CombatActionIndex.TOTAL
-		self.actionmodids = [None] * CombatActionIndex.TOTAL
+		self.actionmodids = [None] * CombatActionIndex.TOTAL # only one modifier per skill?
+
+		# other flags and stuff
+		self.rage = 0
+
+	def get_pos(self):
+		return (x, y)
+
+	def reset(self, eid, ce_type):
+		self.entityindex = eid
+		# TODO: based on combat entity type, load hp, speed and actions
 
 class PlayerCharacterIndex(IntEnum):
 	# all characters are members of the secret cabal of exorcists
 	SLOANE	= 0		# bearded, stoic, former general turned assassin
-	EIRWEN	= 1		# tanned, boisterous, competent
-	BLAYNO 	= 2		# boisterous, pale, snake eyed soldier
+	EIRWEN	= 1		# tanned, boisterous, hyper-competent exorcist gal
+	BLAINO 	= 2		# boisterous, pale, snake eyed soldier
 
 class PlayerCharacter:
 	def __init__(self):
@@ -174,9 +190,9 @@ class Entity_Player(Entity):
 
 		# change facing direction based on movement (or face the player if following)
 		if followingdist2 == None:
-			self.facing_direction = v2_to_leftright(self.facing_direction, self.input_ddp)
+			self.facing_direction = v2_to_leftright(self.input_ddp, self.facing_direction)
 		else:
-			self.facing_direction = v2_to_leftright(self.facing_direction, vec2player)
+			self.facing_direction = v2_to_leftright(vec2player, self.facing_direction)
 
 		# change animation
 		if self.input_ddp == (0, 0):

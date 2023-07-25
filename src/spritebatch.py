@@ -25,6 +25,8 @@ class SpriteBatch:
 		self.ui_frame_texture = pygame.image.load('./res/ui/ui-frame.png').convert_alpha()
 		self.ui_frame_texture = pygame.transform.scale_by(self.ui_frame_texture, TILE_ZOOM * 2)
 
+		self.menu_data = data['menu-textures']
+
 		# load tilemap (TODO: eventually load all tilemaps)
 		self.tilemap_texture = pygame.image.load(data['tilemap']['filepath']).convert_alpha()
 		self.tilemap_dim = (

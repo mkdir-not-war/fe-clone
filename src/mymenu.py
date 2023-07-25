@@ -7,8 +7,9 @@ MENUDATAPATH = './data/graphics/menu-data.json'
 class MenuSceneIndex(IntEnum):
 	MAINMENU 		= 0
 	FREEMOVE 		= 1
+	COMBATPLAYER	= 2
 
-	TOTAL 			= 2
+	TOTAL 			= 3
 
 class MenuElementType(IntEnum):
 	TEXT = 0
@@ -139,14 +140,19 @@ def get_textwidth(text):
 class MenuElementScript(IntEnum):
 	MM_START 		= 0
 	FM_PLACARD 		= 1
+	CBP_INDICATOR	= 2
 
 ## Start Scripts ############
 
 def SCRIPT_FM_PLACARD(element, simstate, mapgen):
 	element.set_text(mapgen.get_regionname())
 
+def SCRIPT_CBP_INDICATOR(element, simstate, mapgen):
+	element.set_text(mapgen.get_regionname())
+
 ## Scripts Dict
 
 SCRIPTSDICT = {
-	MenuElementScript.FM_PLACARD : SCRIPT_FM_PLACARD
+	MenuElementScript.FM_PLACARD 		: SCRIPT_FM_PLACARD,
+	MenuElementScript.CBP_INDICATOR 	: SCRIPT_CBP_INDICATOR
 }

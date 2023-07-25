@@ -2,22 +2,16 @@
 * collision is a tile map -- each tile is made of four 16x16 collision squares,
 	construct collision map from tile map on saving the tile map to map file.
 
-** instead of using a separate tile sheet for animated tiles,
-   just do them in rows of 4 (since the tilesheet is 8 wide,
-   can fit 2 animated tiles per row). Like the int array of 
-   tile indexes, have a bool array of animated or not (mostly not).
-   If yes, sample from the next tile in the row on next frame.
- ^^ animated tiles are at the top of the tilesheet png,
-    hard code how many rows are animated, don't display them
-    in the tilepicker for static tiles
+** TODO: maybe in the future, to replace a main menu completely, we load directly into a couple-room hub.
+		Just an outer garden and inner chapel (unlock decorations for both by playing).
+		Garden east exit starts run, garden north exit enters chapel. Characters hang out in different
+		places in both rooms, talk to a character to swap with follower character.
 
 ========================================
 == QUESTIONS ===========================
 ========================================
-1) should we EQUIP skills? Or do you have all skills available once unlocked, and no extras?
-	- obviously it's fun and a goal to play the game again with the same character but different build
-	  but should the build diversity come from the skill tree? Or can we lean into the pokemon?
-2) should ACTIVATING or BREAKING shields take more turns? Which is harder to do/more situational?
+* 	Which should require more turns/actions: ACTIVATING or BREAKING shields? 
+	Which is harder to do/more situational?
 
 ===== SHIELDS & COMBAT CONDITIONS =====
 * you can't damage enemies who have either a BARRIER or ARMOR until you break it.
@@ -33,13 +27,19 @@
 				they aren't CORNERED anymore (how to display the end of the condition?) and their armor reforms.
 	> BARRIER
 		* breaks when an entity is knocked into the target. At the end of the turn, it reforms
-		* when a target is BURNING, its armor is broken and cannot reform
+		* when a target is BURNING, its barrier is broken and cannot reform until they're burning anymore
+		* maybe barrier doesn't automatically come back? But armor does?
 
 * CONDITIONS:
 	> CORNERED
 		* trigger: the target is adjacent to 2+ tiles that are impassable
+		* effect: breaks armor & procs abilities
 	> BURNING
 		* trigger: knock the target into a impassable tile with fire (1 turn), or proc'd with an attack effect
+		* effect: breaks barriers & procs abilities
+	> FEATHER
+		* trigger: proc'd with an attack effect
+		* effect: knockback sends full distance (until hit enitity or wall) & procs abilities
 
 ===== ENEMY TYPES =====
 [not actual data, just a guide to design]
@@ -65,12 +65,12 @@
 pokemon and skill tree overview:
 	* In each combat, one enemy has an active skill granted by a randomly rolled spirit. 
 		At the end of the combat, you can Exorcise or Capture the spirit.
-	* keystone and skill#1 unlocked at level 1
-	* unlock skills #2-5 by exorcising a spirit after combat
-	* level a skill by Exorcising a spirit after combat
+	* skill#3 unlocked at level 1
+	* unlock/level a skill by Exorcising a spirit after combat
 	* At level 2, can choose between 2 paths on the skill. Can swap path for free.
 	* At level 2, skill gains a modifier, one per path
 	* At level 3, skill gains a passive, one per path
+	* Once all 5 skills are unlocked, the Keystone is automatically unlocked.
 	* When you Capture a spirit, you can slot it into any Skill, Modifier (on a single path) or Passive (")
 		^^^ => 14 levels to max on each character -> 28 total.
 
@@ -120,8 +120,8 @@ START	- pause menu (instant pause in any context, except in pause menu oviously)
 	LT			- while holding, hide option wheel and show popups over all entity HP bars - display buffs/debuffs
 	RT			- n/a
 
-					(skill1)
-	(skill2)						(skill3)
+					(skill3)
+	(skill2)						(skill4)
 						x
-	(skill4)						(skill5)
+	(skill1)						(skill5)
 					(defend)

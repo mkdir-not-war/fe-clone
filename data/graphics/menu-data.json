@@ -24,6 +24,18 @@
 				"scriptid" : "FM_PLACARD",
 				"autorun" : true
 			}
+		],
+		"COMBATPLAYER" : [
+			{
+				"element_type" : "IMAGE",
+				"x" : 0,
+				"y" : 0,
+				"newlinepx" : 0,
+				"text" : null,
+				"texturename" : null,
+				"scriptid" : "CBP_INDICATOR",
+				"autorun" : true
+			}
 		]
 	}
 }

@@ -16,10 +16,6 @@ from src.constants import *
 PATH_TO_REGIONDATA = './data/maps/testregionsdata.json'
 PATH_TO_COLLISIONDATA = './data/maps/collisiontilemap.dat'
 
-GAMEMAP_SIZE = GAMEMAP_TILES_HIGH * GAMEMAP_TILES_WIDE
-
-
-
 SPAWNTILES_FROM_EDGE = 3
 
 TOTALREGIONS = 5 # test:5, game:28?
@@ -148,6 +144,7 @@ class RegionMap:
 		self.tile_layers[TileLayer.MG] = [0] * GAMEMAP_SIZE	
 		self.tile_layers[TileLayer.FG] = [0] * GAMEMAP_SIZE
 		self.collisionmap = [0] * GAMEMAP_SIZE
+		self.burningmap = [0] * GAMEMAP_SIZE # burningmap OR collisionmap == collisionmap
 
 	'''
 	MapData:
